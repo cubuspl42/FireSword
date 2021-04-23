@@ -1,9 +1,9 @@
-package tutorial.webapp
+package firesword
 
 import org.scalajs.dom
 import org.scalajs.dom.document
 
-object TutorialApp {
+object FireSwordApp {
   def main(args: Array[String]): Unit = {
     document.addEventListener("DOMContentLoaded", { (e: dom.Event) =>
       setupUI()
