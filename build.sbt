@@ -7,3 +7,4 @@ scalaVersion := "2.13.4"
 scalaJSUseMainModuleInitializer := true
 
 libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "1.1.0"
+libraryDependencies += "com.github.japgolly.scalacss" %%% "core" % "0.7.0"
