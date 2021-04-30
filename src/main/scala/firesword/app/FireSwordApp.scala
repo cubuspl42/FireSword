@@ -3,15 +3,31 @@ package firesword.app
 import firesword.dom.Dom
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
-import firesword.frp.Frp.{Cell, MutCell}
+import firesword.frp.Frp.{Cell, Const, MutCell, implicitConst, implicitConstSome}
 import org.scalajs.dom.{Event, document}
 import scalacss.StyleA
 
 object FireSwordApp {
   case class TileCoord(i: Int, j: Int)
 
+  type Tile = Int
+
   class Editor {
     private val _hoveredTile = new MutCell[TileCoord](TileCoord(5, 8))
+
+    //    private val _tiles = new MutDynamicMap[TileCoord, Tile](Map(
+    //      TileCoord(0, 0) -> 1,
+    //      TileCoord(0, 1) -> 2,
+    //      TileCoord(1, 0) -> 3,
+    //      TileCoord(1, 1) -> 4,
+    //    ))
+
+    val tiles = Map(
+      TileCoord(0, 0) -> 1,
+      TileCoord(0, 1) -> 2,
+      TileCoord(1, 0) -> 3,
+      TileCoord(1, 1) -> 4,
+    )
 
     val hoveredTile: Cell[TileCoord] = _hoveredTile
 
@@ -53,8 +69,35 @@ object FireSwordApp {
 
     div(List(
       p(editor.hoveredTile.map(_.toString)),
-      checkersView(editor)
+      tilesView(editor),
+      //      checkersView(editor)
     ))
+  }
+
+  def tilesView(editor: Editor): Widget = {
+    def tileFragment(coord: TileCoord, tile: Tile) = {
+      val left = coord.j * 64
+      val top = coord.i * 64
+
+      val styleClass =
+        if ((coord.j + (coord.i % 2)) % 2 == 0) MyStyles.tileFragment1
+        else MyStyles.tileFragment2
+
+      div(
+        styleClass = styleClass,
+        inlineStyle = s"left: ${left}px; top: ${top}px;",
+        children = List(
+          p(s"${tile}")
+        )
+      )
+    }
+
+    div(
+      styleClass = MyStyles.tilesView,
+      children = editor.tiles.toList.map { case (coord, tile) =>
+        tileFragment(coord, tile)
+      },
+    )
   }
 
   def checkersView(editor: Editor): Widget = {
@@ -65,8 +108,9 @@ object FireSwordApp {
       ))
 
       val theDiv = div(
-        style = effectiveStyle,
         List(),
+        styleClass = effectiveStyle,
+        inlineStyle = Const(""),
       )
 
       theDiv.onPointerDown.listen(_ => {
@@ -80,8 +124,8 @@ object FireSwordApp {
       val deltaJ = if (isEven) 1 else 0
 
       div(
-        style = MyStyles.tr,
-        (1 to 16).map(j =>
+        styleClass = MyStyles.tr,
+        children = (1 to 16).map(j =>
           if ((j + deltaJ) % 2 == 0)
             tableCell(i, j, MyStyles.td1)
           else
@@ -90,9 +134,11 @@ object FireSwordApp {
       )
     }
 
+    implicitConst()
+
     div(
-      style = MyStyles.table,
-      (1 to 16).map(i =>
+      styleClass = MyStyles.table,
+      children = (1 to 16).map(i =>
         tableRow(i, isEven = i % 2 == 0)
       ).toList
     )

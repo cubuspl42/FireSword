@@ -34,15 +34,25 @@ object Dom {
       new Widget(element)
     }
 
-    def div(style: Cell[Option[StyleA]], children: List[Widget]): Widget = {
+    def div(
+             children: List[Widget] = List(),
+             styleClass: Cell[Option[StyleA]] = Const(None),
+             inlineStyle: Cell[String] = Const(""),
+           ): Widget = {
       val element = document.createElement("div").asInstanceOf[Element]
       val classList = element.classList
 
-      style.listen(sOpt => {
+      styleClass.listen(sOpt => {
         classList.remove(classList.item(0))
         sOpt.foreach(s => {
           classList.add(s.htmlClass)
         })
+      })
+
+      inlineStyle.listen(is => {
+        element.style = is
+
+        console.log(s"Setting style: ${is}")
       })
 
       children.foreach(c => {
@@ -51,12 +61,5 @@ object Dom {
 
       new Widget(element)
     }
-
-    def div(style: StyleA, children: List[Widget]): Widget = {
-      div(Const(Some(style)), children)
-    }
-
-    def div(children: List[Widget]): Widget =
-      div(Const(None), children)
   }
 }

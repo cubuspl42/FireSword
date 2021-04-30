@@ -5,6 +5,7 @@ import scalacss.DevDefaults._
 import scala.language.postfixOps
 
 object MyStyles extends StyleSheet.Inline {
+
   import dsl._
 
   val table: StyleA = style(
@@ -17,22 +18,54 @@ object MyStyles extends StyleSheet.Inline {
 
   val td1: StyleA = style(
     display tableCell,
-    width (64 px),
-    height (64 px),
+    width(64 px),
+    height(64 px),
     backgroundColor red,
   )
 
   val td2: StyleA = style(
     display tableCell,
-    width (64 px),
-    height (64 px),
+    width(64 px),
+    height(64 px),
     backgroundColor black,
   )
 
   val tdHovered: StyleA = style(
     display tableCell,
-    width (64 px),
-    height (64 px),
+    width(64 px),
+    height(64 px),
     backgroundColor blue,
   )
+
+  val tilesView: StyleA = style(
+    position relative,
+  )
+
+  val tileFragment1: StyleA = style(
+    display flex,
+    alignItems center,
+    justifyContent center,
+
+    position absolute,
+    width(64 px),
+    height(64 px),
+    backgroundColor lightgrey,
+  )
+
+  val tileFragment2: StyleA = style(
+    display flex,
+    alignItems center,
+    justifyContent center,
+
+    position absolute,
+    width(64 px),
+    height(64 px),
+    backgroundColor darkgrey,
+  )
+
+  val tileId: StyleA = style(
+    display flex,
+
+  )
+
 }

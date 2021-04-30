@@ -1,6 +1,7 @@
 package firesword.frp
 
 import scala.collection.mutable
+import scala.language.implicitConversions
 
 object Frp {
   class behavior() extends scala.annotation.StaticAnnotation
@@ -161,4 +162,8 @@ object Frp {
   }
 
   def Const[A](a: A): Cell[A] = new MutCell(a)
+
+  implicit def implicitConst[A](a: A): Cell[A] = Const(a)
+
+  implicit def implicitConstSome[A](a: A): Cell[Option[A]] = Const(Some(a))
 }
