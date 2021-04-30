@@ -1,5 +1,6 @@
 package firesword.dom
 
+import firesword.frp.DynamicList.DynamicList
 import firesword.frp.Frp.{Cell, Const, EventStream, SourceEventStream}
 import org.scalajs.dom
 import org.scalajs.dom._
@@ -7,6 +8,10 @@ import org.scalajs.dom.html.Element
 import scalacss.StyleA
 
 object Dom {
+  private def clearElement(element: Element): Unit = {
+    element.innerHTML = ""
+  }
+
   private def elementEventStream[E <: Event](element: Element, eventType: String): EventStream[E] =
     new SourceEventStream[E](listener => {
       element.addEventListener(eventType, listener)
@@ -27,7 +32,6 @@ object Dom {
 
       // TODO: Unlisten
       text.listen(t => {
-        console.log(t)
         element.textContent = t
       })
 
@@ -35,7 +39,7 @@ object Dom {
     }
 
     def div(
-             children: List[Widget] = List(),
+             children: DynamicList[Widget] = List(),
              styleClass: Cell[Option[StyleA]] = Const(None),
              inlineStyle: Cell[String] = Const(""),
            ): Widget = {
@@ -51,12 +55,13 @@ object Dom {
 
       inlineStyle.listen(is => {
         element.style = is
-
-        console.log(s"Setting style: ${is}")
       })
 
-      children.foreach(c => {
-        element.appendChild(c.node)
+      children.content.listen(children => {
+        clearElement(element)
+        children.foreach(c => {
+          element.appendChild(c.node)
+        })
       })
 
       new Widget(element)

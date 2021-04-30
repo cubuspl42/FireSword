@@ -3,6 +3,8 @@ package firesword.app
 import firesword.dom.Dom
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
+import firesword.frp.DynamicList.implicitDynamicList
+import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
 import firesword.frp.Frp.{Cell, Const, MutCell, implicitConst, implicitConstSome}
 import org.scalajs.dom.{Event, document}
 import scalacss.StyleA
@@ -15,19 +17,14 @@ object FireSwordApp {
   class Editor {
     private val _hoveredTile = new MutCell[TileCoord](TileCoord(5, 8))
 
-    //    private val _tiles = new MutDynamicMap[TileCoord, Tile](Map(
-    //      TileCoord(0, 0) -> 1,
-    //      TileCoord(0, 1) -> 2,
-    //      TileCoord(1, 0) -> 3,
-    //      TileCoord(1, 1) -> 4,
-    //    ))
-
-    val tiles = Map(
+    private val _tiles = new MutDynamicMap[TileCoord, Tile](Map(
       TileCoord(0, 0) -> 1,
       TileCoord(0, 1) -> 2,
       TileCoord(1, 0) -> 3,
       TileCoord(1, 1) -> 4,
-    )
+    ))
+
+    val tiles: DynamicMap[TileCoord, Tile] = _tiles
 
     val hoveredTile: Cell[TileCoord] = _hoveredTile
 
@@ -38,6 +35,10 @@ object FireSwordApp {
     def hoverNextTile(): Unit = {
       val oldCoord = hoveredTile.sample()
       hoverTile(TileCoord(oldCoord.i, oldCoord.j + 1))
+    }
+
+    def insertTile(): Unit = {
+      _tiles.put(TileCoord(5, 5), 100)
     }
   }
 
@@ -70,7 +71,6 @@ object FireSwordApp {
     div(List(
       p(editor.hoveredTile.map(_.toString)),
       tilesView(editor),
-      //      checkersView(editor)
     ))
   }
 
@@ -92,12 +92,18 @@ object FireSwordApp {
       )
     }
 
-    div(
+    val theDiv = div(
       styleClass = MyStyles.tilesView,
       children = editor.tiles.toList.map { case (coord, tile) =>
         tileFragment(coord, tile)
       },
     )
+
+    theDiv.onPointerDown.listen(_ => {
+      editor.insertTile()
+    })
+
+    theDiv
   }
 
   def checkersView(editor: Editor): Widget = {
