@@ -6,24 +6,17 @@ import firesword.dom.Dom.Widget
 import firesword.frp.DynamicList.implicitDynamicList
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
 import firesword.frp.Frp.{Cell, Const, MutCell, implicitConst, implicitConstSome}
-import org.scalajs.dom.{Event, PointerEvent, console, document}
+import org.scalajs.dom.ext.KeyValue
+import org.scalajs.dom.{Event, KeyboardEvent, console, document}
 import scalacss.StyleA
 
 import scala.language.implicitConversions
-import scala.scalajs.js
 
 object FireSwordApp {
-
-
-  @js.native
-  trait PointerEventExperimental extends PointerEvent {
-    def offsetX: Double
-
-    def offsetY: Double
+  case class Vec2(x: Double, y: Double) {
+    def +(that: Vec2): Vec2 =
+      Vec2(x + that.x, y + that.y)
   }
-
-  implicit def implicitPointerEventExperimental(event: PointerEvent): PointerEventExperimental =
-    event.asInstanceOf[PointerEventExperimental]
 
   private val tileSize = 64
 
@@ -32,6 +25,7 @@ object FireSwordApp {
   type Tile = Int
 
   class Editor {
+
     private val _hoveredTile = new MutCell[TileCoord](TileCoord(5, 8))
 
     private val _tiles = new MutDynamicMap[TileCoord, Tile](Map(
@@ -44,6 +38,25 @@ object FireSwordApp {
     val tiles: DynamicMap[TileCoord, Tile] = _tiles
 
     val hoveredTile: Cell[TileCoord] = _hoveredTile
+
+    val _zoom = new MutCell(1.0)
+
+    val zoom: Cell[Double] = _zoom
+
+    def zoomCamera(delta: Double): Unit = {
+      val oldZoom = _zoom.sample()
+      _zoom.set(oldZoom + delta)
+    }
+
+    val _cameraPosition = new MutCell(Vec2(0.0, 0.0))
+
+    val cameraPosition: Cell[Vec2] = _cameraPosition
+
+
+    def moveCamera(delta: Vec2): Unit = {
+      val oldPosition = _cameraPosition.sample()
+      _cameraPosition.set(oldPosition + delta)
+    }
 
     def hoverTile(coord: TileCoord): Unit = {
       _hoveredTile.set(coord)
@@ -93,6 +106,34 @@ object FireSwordApp {
   def rootView(): Widget = {
     val editor = new Editor()
 
+    document.body.addEventListener("keydown", (e: KeyboardEvent) => {
+      import firesword.frp.Frp.implicitSome
+
+      {
+        val d = 32
+
+        val deltaV: Option[Vec2] = e.key match {
+          case KeyValue.ArrowLeft => Vec2(-d, 0)
+          case KeyValue.ArrowUp => Vec2(0, -d)
+          case KeyValue.ArrowRight => Vec2(d, 0)
+          case KeyValue.ArrowDown => Vec2(0, d)
+          case _ => None
+        }
+
+        deltaV.foreach(editor.moveCamera)
+      }
+
+      {
+        val deltaZ: Option[Double] = e.key match {
+          case "+" => 0.1
+          case "-" => -0.1
+          case _ => None
+        }
+
+        deltaZ.foreach(editor.zoomCamera)
+      }
+    })
+
     val theDiv = div(
       styleClass = MyStyles.root,
       children = List(
@@ -122,10 +163,17 @@ object FireSwordApp {
       )
     }
 
+
+    val inlineStyle = editor.cameraPosition.map(p =>
+      s"transform-origin: top left; transform: scale(1.5) translate(${-p.x}px, ${-p.y}px);"
+    )
+
+
     val theDiv = div(
       styleClass = MyStyles.tilesView,
       children = List(div(
         styleClass = MyStyles.tilesRoot,
+        inlineStyle = inlineStyle,
         children = editor.tiles.toList.map { case (coord, tile) =>
           tileFragment(coord, tile)
         },

@@ -166,4 +166,6 @@ object Frp {
   implicit def implicitConst[A](a: A): Cell[A] = Const(a)
 
   implicit def implicitConstSome[A](a: A): Cell[Option[A]] = Const(Some(a))
+
+  implicit def implicitSome[A](a: A): Option[A] = Some(a)
 }

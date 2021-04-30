@@ -55,6 +55,8 @@ object MyStyles extends StyleSheet.Inline {
   val tilesRoot: StyleA = style(
     position relative,
     pointerEvents none,
+    left(50 %%),
+    top(50 %%),
   )
 
   val tileFragment1: StyleA = style(
