@@ -8,6 +8,16 @@ object MyStyles extends StyleSheet.Inline {
 
   import dsl._
 
+  val root: StyleA = style(
+    width(100 vw),
+    height(100 vh),
+    backgroundColor silver,
+
+
+    display flex,
+    flexDirection column,
+  )
+
   val table: StyleA = style(
     display table,
   )
@@ -38,7 +48,13 @@ object MyStyles extends StyleSheet.Inline {
   )
 
   val tilesView: StyleA = style(
+    flexGrow(1),
+    overflow hidden,
+  )
+
+  val tilesRoot: StyleA = style(
     position relative,
+    pointerEvents none,
   )
 
   val tileFragment1: StyleA = style(

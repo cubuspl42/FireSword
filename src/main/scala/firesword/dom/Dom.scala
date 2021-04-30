@@ -38,6 +38,17 @@ object Dom {
       new Widget(element)
     }
 
+    def span(text: Cell[String]): Widget = {
+      val element = document.createElement("span").asInstanceOf[Element]
+
+      // TODO: Unlisten
+      text.listen(t => {
+        element.textContent = t
+      })
+
+      new Widget(element)
+    }
+
     def div(
              children: DynamicList[Widget] = List(),
              styleClass: Cell[Option[StyleA]] = Const(None),
