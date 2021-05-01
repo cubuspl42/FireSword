@@ -5,7 +5,7 @@ import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
 import firesword.frp.DynamicList.implicitDynamicList
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
-import firesword.frp.Frp.{Cell, Const, MutCell, implicitConst, implicitConstSome}
+import firesword.frp.Frp.{Cell, Const, EventStream, EventStreamSink, MutCell, implicitConst, implicitConstSome}
 import org.scalajs.dom.ext.KeyValue
 import org.scalajs.dom.{Event, KeyboardEvent, console, document}
 import scalacss.StyleA
@@ -18,6 +18,53 @@ object FireSwordApp {
       Vec2(x + that.x, y + that.y)
   }
 
+  class Camera(initialState: CameraState) {
+    val state: Cell[CameraState] = initialState.nextState.hold(initialState)
+
+    val focusPoint: Cell[Vec2] = state.switchMapC(_.focusPoint)
+  }
+
+  abstract class CameraState {
+    val focusPoint: Cell[Vec2]
+
+    val nextState: EventStream[CameraState]
+  }
+
+  class FreeCamera(initialFocusPoint: Vec2) extends CameraState {
+    private val _focusPoint = new MutCell(initialFocusPoint)
+
+    override val focusPoint: Cell[Vec2] = _focusPoint
+
+    private val _nextState = new EventStreamSink[CameraState]()
+
+    override val nextState: EventStream[CameraState] = _nextState
+
+
+    def moveCamera(delta: Vec2): Unit = {
+      _focusPoint.update(_ + delta)
+    }
+
+    def dragCamera(targetPoint: Cell[Vec2], stop: EventStream[Unit]): Unit = {
+      _nextState.send(new DraggedCamera(
+        targetPoint=targetPoint,
+        anchorPoint = ???,
+        stop = stop,
+      ))
+    }
+  }
+
+  class DraggedCamera(
+                       targetPoint: Cell[Vec2],
+                       anchorPoint: Vec2,
+                       stop: EventStream[Unit],
+                     ) extends CameraState {
+
+    override val focusPoint: Cell[Vec2] = ???
+
+    override val nextState: EventStream[CameraState] = ???
+  }
+
+
   private val tileSize = 64
 
   case class TileCoord(i: Int, j: Int)
@@ -28,7 +75,7 @@ object FireSwordApp {
 
     private val _hoveredTile = new MutCell[TileCoord](TileCoord(5, 8))
 
-    private val _tiles = new MutDynamicMap[TileCoord, Tile](Map(
+    private val _tiles = new MutDynamicMap(Map(
       TileCoord(0, 0) -> 1,
       TileCoord(0, 1) -> 2,
       TileCoord(1, 0) -> 3,
@@ -56,6 +103,10 @@ object FireSwordApp {
     def moveCamera(delta: Vec2): Unit = {
       val oldPosition = _cameraPosition.sample()
       _cameraPosition.set(oldPosition + delta)
+    }
+
+    def dragCamera(targetPosition: Cell[Vec2], stop: EventStream[Unit]): Unit = {
+
     }
 
     def hoverTile(coord: TileCoord): Unit = {
@@ -169,19 +220,21 @@ object FireSwordApp {
     )
 
 
-    val theDiv = div(
-      styleClass = MyStyles.tilesView,
-      children = List(div(
-        styleClass = MyStyles.tilesRoot,
-        inlineStyle = inlineStyle,
-        children = editor.tiles.toList.map { case (coord, tile) =>
-          tileFragment(coord, tile)
-        },
-      ))
+    val tilesRootDiv = div(
+      styleClass = MyStyles.tilesRoot,
+      inlineStyle = inlineStyle,
+      children = editor.tiles.toList.map { case (coord, tile) =>
+        tileFragment(coord, tile)
+      },
     )
 
-    theDiv.onPointerDown.listen(e => {
-      val rect = theDiv.node.getBoundingClientRect()
+    val tilesViewDiv = div(
+      styleClass = MyStyles.tilesView,
+      children = List(tilesRootDiv)
+    )
+
+    tilesViewDiv.onPointerDown.listen(e => {
+      val rect = tilesRootDiv.node.getBoundingClientRect()
       val x = e.clientX - rect.left
       val y = e.clientY - rect.top
 
@@ -189,7 +242,7 @@ object FireSwordApp {
       editor.insertTile(editor.getTileCoordAtPoint(x, y))
     })
 
-    theDiv
+    tilesViewDiv
   }
 
   def checkersView(editor: Editor): Widget = {

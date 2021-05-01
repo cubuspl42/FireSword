@@ -31,17 +31,58 @@ object Frp {
     }
   }
 
+  class CellSwitchC[A](source: Cell[Cell[A]]) extends SimpleCell[A] {
+    private var _unsubscribeOuter: Unsubscribe = _
+
+    private var _unsubscribeInner: Unsubscribe = _
+
+    override protected def onStart(): Unit = {
+      def addInnerListener(inner: Cell[A]): Unit = {
+        _unsubscribeInner = inner.addListener(notifyListeners)
+      }
+
+      def reAddInnerListener(inner: Cell[A]): Unit = {
+        _unsubscribeInner()
+        addInnerListener(inner)
+      }
+
+      _unsubscribeOuter = source.addListener(inner => {
+        notifyListeners(inner.sample())
+        reAddInnerListener(inner)
+      })
+
+
+      addInnerListener(source.sample())
+    }
+
+    override protected def onStop(): Unit = {
+      _unsubscribeInner()
+      _unsubscribeInner = null
+
+      _unsubscribeOuter()
+      _unsubscribeOuter = null
+    }
+
+    override def sample(): A =
+      source.sample().sample()
+  }
+
   type Listener[A] = A => Unit
 
   type Unsubscribe = () => Unit
 
   abstract class EventStream[+A] {
+    def hold[B >: A](initialValue2: B): Cell[B] =
+      new HoldCell(initialValue2, this)
+
+    @action
+    def listen(@action h: A => Unit): Unit
+
     private[Frp] def addListener(h: A => Unit): Unit
 
     private[Frp] def removeListener(h: A => Unit): Unit
 
-    @action
-    def listen(@action h: A => Unit): Unit
+
   }
 
   abstract class SimpleEventStream[A] extends EventStream[A] {
@@ -57,6 +98,8 @@ object Frp {
 
     private[Frp] def removeListener(h: A => Unit): Unit = {
       listeners.remove(h)
+
+      // TODO: onStop
     }
 
     protected def notifyListeners(a: A): Unit = {
@@ -73,6 +116,25 @@ object Frp {
 
     protected def onStop(): Unit
   }
+
+
+  class EventStreamSink[A](
+
+                          ) extends SimpleEventStream[A] {
+
+    def send(a: A): Unit = {
+      notifyListeners(a)
+    }
+
+    override protected def onStart(): Unit = {
+    }
+
+    override protected def onStop(): Unit = {
+    }
+  }
+
+
+
 
   class SourceEventStream[A](
                               addListener: Listener[A] => Unsubscribe,
@@ -95,7 +157,9 @@ object Frp {
 
     def map[B](f: A => B): Cell[B]
 
-    private[Frp] def addListener(h: A => Unit): Unit
+    def switchMapC[B](f: A => Cell[B]): Cell[B] = new CellSwitchC[B](this.map(f))
+
+    private[Frp] def addListener(h: A => Unit): Unsubscribe
 
     private[Frp] def removeListener(h: A => Unit): Unit
 
@@ -106,17 +170,26 @@ object Frp {
     @behavior
     def sample(): A
   }
+  //
+  //    object Cell {
+  //      def switchHoldC[A](initialCell: Cell[A], steps: EventStream[Cell[A]]): Cell[A] =
+  //        ???
+  //    }
 
   abstract class SimpleCell[A] extends Cell[A] {
     private val listeners = new mutable.HashSet[A => Unit]
 
     def map[B](f: A => B): Cell[B] = new MapCell[A, B](this, f)
 
-    private[Frp] def addListener(h: A => Unit): Unit = {
+    private[Frp] def addListener(h: A => Unit): Unsubscribe = {
       listeners.addOne(h)
 
       if (listeners.size == 1) {
         onStart()
+      }
+
+      return () => {
+        removeListener(h)
       }
     }
 
@@ -144,6 +217,8 @@ object Frp {
   }
 
 
+
+
   class MutCell[A](initValue: A) extends SimpleCell[A] {
     private var value = initValue
 
@@ -153,6 +228,12 @@ object Frp {
       value = a
     }
 
+    @action
+    def update(f: A => A): Unit = {
+      val oldValue = this.sample()
+      this.set(f(oldValue))
+    }
+
     @behavior
     override def sample(): A = value
 
@@ -160,6 +241,32 @@ object Frp {
 
     override protected def onStop(): Unit = ()
   }
+
+  class HoldCell[A](
+                     initialValue: A,
+                     steps: EventStream[A]
+                   ) extends SimpleCell[A] {
+    private var _currentValue = initialValue
+
+    override protected def onStart(): Unit = {
+    }
+
+    override protected def onStop(): Unit = {
+    }
+
+    override def sample(): A = _currentValue
+
+    // TODO: Remove listener
+    steps.addListener(a => {
+      notifyListeners(a)
+      _currentValue = a
+    })
+  }
+
+  object HoldCell {
+
+  }
+
 
   def Const[A](a: A): Cell[A] = new MutCell(a)
 
