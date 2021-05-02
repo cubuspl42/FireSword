@@ -18,8 +18,6 @@ object FireSwordApp {
     document.addEventListener("DOMContentLoaded", (_: Event) => {
       render()
     })
-
-    Pako.inflate(new Uint8Array(1024))
   }
 
   private def renderCss(): Unit = {
@@ -54,10 +52,15 @@ object FireSwordApp {
         children = span("Loading..."),
       ),
       successfullyCompleted = editorView,
-      failed = (_: Throwable) => div(
-        styleClass = MyStyles.center,
-        children = span("Error"),
-      ),
+      failed = (throwable: Throwable) => {
+        println("Error!")
+        println(throwable)
+        println(throwable.getCause)
+        div(
+          styleClass = MyStyles.center,
+          children = span("Error"),
+        )
+      },
     )
 
     val theDiv = div(

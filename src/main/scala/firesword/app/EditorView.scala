@@ -9,8 +9,10 @@ import firesword.frp.EventStream.EventStream
 import firesword.frp.EventStreamSink.EventStreamSink
 import firesword.frp.Frp.{Const, implicitConst, implicitConstSome}
 import firesword.frp.MutCell.MutCell
+import firesword.wwd.Wwd.readWorld
 import org.scalajs.dom._
 import org.scalajs.dom.experimental.Fetch.fetch
+import org.scalajs.dom.experimental.Response
 import org.scalajs.dom.ext.KeyValue
 import scalacss.StyleA
 
@@ -140,6 +142,10 @@ object EditorView {
                 worldBuffer: ArrayBuffer,
               ) {
 
+    private val world = readWorld(worldBuffer)
+
+    println(world)
+
     private val _hoveredTile = new MutCell[TileCoord](TileCoord(5, 8))
 
     private val _tiles = new MutDynamicMap(Map(
@@ -211,13 +217,21 @@ object EditorView {
       p.future
     }
 
+    def failOnUnsuccessfulResponse(response: Response): Response = {
+      if (response.ok) {
+        response
+      } else {
+        throw new Exception("Fetch error")
+      }
+    }
+
     def load(): Future[Editor] = {
       for (
-        response <- fetch("assets/worlds/WORLD.WWD").toFuture;
+        response <- fetch("assets/worlds/WORLD.WWD").toFuture
+          .map(failOnUnsuccessfulResponse);
         worldBuffer <- response.arrayBuffer().toFuture;
         _ <- delay(2000)
       ) yield {
-        console.log(worldBuffer)
         new Editor(worldBuffer)
       }
     }
