@@ -108,7 +108,9 @@ object Frp {
     override def removeListener(h: A => Unit): Unit = {
       listeners.remove(h)
 
-      // TODO: onStop
+      if (listeners.isEmpty) {
+        onStop()
+      }
     }
 
     protected def notifyListeners(a: A): Unit = {

@@ -30,12 +30,16 @@ object FireSwordApp {
   }
 
   class Camera(initialState: CameraState) {
-    val state: Cell[CameraState] = initialState.asCell
+    //    val state: Cell[CameraState] = initialState.asCell
+
+    val state: Cell[CameraState] =
+      Cell.followFirst[CameraState](initialState, _.nextState)
 
     val focusPoint: Cell[Vec2] = state.switchMapC(_.focusPoint)
   }
 
   object CameraEquation {
+    // Equation:
     // targetPoint = worldPoint - focusPoint
 
     def solveForTargetPoint(worldPoint: Vec2, focusPoint: Vec2): Vec2 =
@@ -53,8 +57,8 @@ object FireSwordApp {
 
     val nextState: EventStream[CameraState]
 
-    def asCell: Cell[CameraState] =
-      Cell.switchHoldC(this, nextState.map(_.asCell))
+    //    def asCell: Cell[CameraState] =
+    //      Cell.switchHoldC(this, nextState.map(_.asCell))
   }
 
   case class FreeCamera(initialFocusPoint: Vec2) extends CameraState {
@@ -212,7 +216,15 @@ object FireSwordApp {
           case _ => None
         }
 
-        //        deltaV.foreach(editor.moveCamera)
+        deltaV.foreach(dv => {
+          val cameraState = editor.camera.state.sample()
+          cameraState match {
+            case freeCamera: FreeCamera => {
+              freeCamera.moveCamera(dv)
+            }
+            case _ => ()
+          }
+        })
       }
 
       {
@@ -295,10 +307,6 @@ object FireSwordApp {
 
           val targetPoint = tilesViewDiv.onPointerMove.hold(e)
             .map(calculateTargetPoint)
-
-//          tilesViewDiv.node.addEventListener("pointerup", e => {
-//            println("Pointer up! (side)")
-//          })
 
           freeCamera.dragCamera(
             targetPoint = targetPoint,
