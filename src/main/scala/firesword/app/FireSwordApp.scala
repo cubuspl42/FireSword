@@ -27,6 +27,12 @@ object FireSwordApp {
   //  }
 
   case class Vec2(x: Double, y: Double) {
+    def *(s: Double): Vec2 =
+      Vec2(x * s, y * s)
+
+    def /(s: Double): Vec2 =
+      Vec2(x / s, y / s)
+
     def +(that: Vec2): Vec2 =
       Vec2(x + that.x, y + that.y)
 
@@ -46,16 +52,16 @@ object FireSwordApp {
 
   object CameraEquation {
     // Equation:
-    // targetPoint = worldPoint - focusPoint
+    // targetPoint = (worldPoint - focusPoint) * zoom
 
-    def solveForTargetPoint(worldPoint: Vec2, focusPoint: Vec2): Vec2 =
-      worldPoint - focusPoint
+    def solveForTargetPoint(worldPoint: Vec2, focusPoint: Vec2, zoom: Double): Vec2 =
+      (worldPoint - focusPoint) * zoom
 
-    def solveForFocusPoint(worldPoint: Vec2, targetPoint: Vec2): Vec2 =
-      worldPoint - targetPoint
+    def solveForFocusPoint(worldPoint: Vec2, targetPoint: Vec2, zoom: Double): Vec2 =
+      worldPoint - targetPoint / zoom
 
-    def solveForWorldPoint(targetPoint: Vec2, focusPoint: Vec2): Vec2 =
-      targetPoint + focusPoint
+    def solveForWorldPoint(targetPoint: Vec2, focusPoint: Vec2, zoom: Double): Vec2 =
+      targetPoint / zoom + focusPoint
   }
 
   abstract class CameraState {
@@ -67,7 +73,7 @@ object FireSwordApp {
     //      Cell.switchHoldC(this, nextState.map(_.asCell))
   }
 
-  case class FreeCamera(initialFocusPoint: Vec2) extends CameraState {
+  case class FreeCamera(initialFocusPoint: Vec2, zoom: Cell[Double]) extends CameraState {
     private val _focusPoint = new MutCell(initialFocusPoint)
 
     override val focusPoint: Cell[Vec2] = _focusPoint
@@ -84,12 +90,14 @@ object FireSwordApp {
       val anchorPoint = CameraEquation.solveForWorldPoint(
         targetPoint = targetPoint.sample(),
         focusPoint = focusPoint.sample(),
+        zoom = zoom.sample(),
       )
 
       _nextState.send(DraggedCamera(
         targetPoint = targetPoint,
         anchorPoint = anchorPoint,
         stop = stop,
+        zoom = zoom,
       ))
     }
   }
@@ -98,16 +106,24 @@ object FireSwordApp {
                             targetPoint: Cell[Vec2],
                             anchorPoint: Vec2,
                             stop: EventStream[Unit],
+                            zoom: Cell[Double]
                           ) extends CameraState {
-    override val focusPoint: Cell[Vec2] = targetPoint.map(tp =>
-      CameraEquation.solveForFocusPoint(
-        worldPoint = anchorPoint,
-        targetPoint = tp,
-      ),
+    override val focusPoint: Cell[Vec2] = Cell.map2(
+      targetPoint,
+      zoom,
+      (tp: Vec2, z: Double) =>
+        CameraEquation.solveForFocusPoint(
+          worldPoint = anchorPoint,
+          targetPoint = tp,
+          zoom = z,
+        ),
     )
 
     override val nextState: EventStream[CameraState] =
-      stop.map(_ => FreeCamera(focusPoint.sample()))
+      stop.map(_ => FreeCamera(
+        initialFocusPoint = focusPoint.sample(),
+        zoom = zoom,
+      ))
   }
 
 
@@ -134,17 +150,20 @@ object FireSwordApp {
 
     val _zoom = new MutCell(1.0)
 
-    val zoom: Cell[Double] = _zoom
+    val cameraZoom: Cell[Double] = _zoom
 
     def zoomCamera(delta: Double): Unit = {
-      //      _zoom.update(_ + delta)
+      _zoom.update(_ + delta)
     }
 
-    val camera = new Camera(FreeCamera(Vec2(0.0, 0.0)))
+    val camera = new Camera(FreeCamera(
+      initialFocusPoint = Vec2(0.0, 0.0),
+      zoom = cameraZoom,
+    ))
 
     //    val _cameraPosition = new MutCell(Vec2(0.0, 0.0))
 
-    val cameraPosition: Cell[Vec2] = camera.focusPoint
+    val cameraFocusPoint: Cell[Vec2] = camera.focusPoint
 
 
     //    def moveCamera(delta: Vec2): Unit = {
@@ -268,11 +287,12 @@ object FireSwordApp {
       )
     }
 
-    val inlineStyle = editor.cameraPosition.map(p => {
-      //      println(p)
-      //      console.log(p.toString)
-      s"transform-origin: top left; transform: scale(1.0) translate(${-p.x}px, ${-p.y}px);"
-    })
+    val inlineStyle = Cell.map2(
+      editor.cameraFocusPoint,
+      editor.cameraZoom,
+      (fp: Vec2, z: Double) =>
+        s"transform-origin: top left; transform: scale($z) translate(${-fp.x}px, ${-fp.y}px);"
+    )
 
     val tilesRootDiv = div(
       styleClass = MyStyles.tilesRoot,

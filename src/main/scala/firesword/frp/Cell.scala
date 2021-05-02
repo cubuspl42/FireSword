@@ -9,7 +9,6 @@ import scala.language.implicitConversions
 
 object Cell {
   abstract class Cell[+A] {
-
     def map[B](f: A => B): Cell[B]
 
     def switchMapC[B](f: A => Cell[B]): Cell[B] =
@@ -26,6 +25,13 @@ object Cell {
     @behavior
     def sample(): A
   }
+
+  def map2[A, B, C](ca: Cell[A], cb: Cell[B], f: (A, B) => C): Cell[C] =
+    ca.switchMapC(a =>
+      cb.map(b =>
+        f(a, b),
+      ),
+    )
 
   def followFirst[A](a: A, f: A => EventStream[A]): Cell[A] =
     new CellFollowFirst[A](a, f)

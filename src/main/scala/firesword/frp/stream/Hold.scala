@@ -6,6 +6,7 @@ import firesword.frp.SimpleCell.SimpleCell
 import firesword.frp.SimpleEventStream.SimpleEventStream
 
 object Hold {
+  // TODO: Opt-out
   class StreamHold[A](
                      initialValue: A,
                      steps: EventStream[A]
