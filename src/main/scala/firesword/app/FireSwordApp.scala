@@ -5,14 +5,14 @@ import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
 import firesword.frp.Cell
 import firesword.frp.Cell.Cell
-import firesword.frp.MutCell.MutCell
 import firesword.frp.DynamicList.implicitDynamicList
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
 import firesword.frp.EventStream.EventStream
 import firesword.frp.EventStreamSink.EventStreamSink
 import firesword.frp.Frp.{Const, implicitConst, implicitConstSome}
-import org.scalajs.dom.ext.KeyValue
+import firesword.frp.MutCell.MutCell
 import org.scalajs.dom._
+import org.scalajs.dom.ext.KeyValue
 import scalacss.StyleA
 
 import scala.language.implicitConversions
@@ -40,7 +40,8 @@ object FireSwordApp {
     val state: Cell[CameraState] =
       Cell.followFirst[CameraState](initialState, _.nextState)
 
-    val focusPoint: Cell[Vec2] = state.switchMapC(_.focusPoint)
+    val focusPoint: Cell[Vec2] =
+      state.switchMapC(_.focusPoint)
   }
 
   object CameraEquation {
@@ -75,7 +76,6 @@ object FireSwordApp {
 
     override val nextState: EventStream[CameraState] = _nextState
 
-
     def moveCamera(delta: Vec2): Unit = {
       _focusPoint.update(_ + delta)
     }
@@ -107,10 +107,7 @@ object FireSwordApp {
     )
 
     override val nextState: EventStream[CameraState] =
-      stop.map(_ => {
-        println("FreeCamera")
-        FreeCamera(focusPoint.sample())
-      })
+      stop.map(_ => FreeCamera(focusPoint.sample()))
   }
 
 
@@ -143,7 +140,7 @@ object FireSwordApp {
       //      _zoom.update(_ + delta)
     }
 
-    val camera = new Camera(new FreeCamera(Vec2(0.0, 0.0)))
+    val camera = new Camera(FreeCamera(Vec2(0.0, 0.0)))
 
     //    val _cameraPosition = new MutCell(Vec2(0.0, 0.0))
 
@@ -170,7 +167,7 @@ object FireSwordApp {
 
     def insertTile(coord: TileCoord): Unit = {
       val tileId = 100
-      console.log(s"Inserting ${tileId} @ ${coord}")
+      console.log(s"Inserting $tileId @ $coord")
       _tiles.put(coord, tileId)
     }
 
@@ -224,9 +221,8 @@ object FireSwordApp {
         deltaV.foreach(dv => {
           val cameraState = editor.camera.state.sample()
           cameraState match {
-            case freeCamera: FreeCamera => {
+            case freeCamera: FreeCamera =>
               freeCamera.moveCamera(dv)
-            }
             case _ => ()
           }
         })
@@ -267,7 +263,7 @@ object FireSwordApp {
         styleClass = styleClass,
         inlineStyle = s"left: ${left}px; top: ${top}px;",
         children = List(
-          p(s"${tile}")
+          p(s"$tile")
         )
       )
     }
@@ -285,8 +281,6 @@ object FireSwordApp {
         tileFragment(coord, tile)
       },
     )
-
-
 
     val tilesOriginDiv = div(
       styleClass = MyStyles.tilesOrigin,
@@ -310,19 +304,14 @@ object FireSwordApp {
       val cameraState = editor.camera.state.sample()
 
       cameraState match {
-        case freeCamera: FreeCamera => {
-
+        case freeCamera: FreeCamera =>
           val targetPoint = tilesViewDiv.onPointerMove.hold(e)
             .map(calculateTargetPoint)
 
           freeCamera.dragCamera(
             targetPoint = targetPoint,
-            stop = tilesViewDiv.onPointerUp.map(_ => {
-              println("Pointer up! (Stream.map)")
-              ()
-            }),
+            stop = tilesViewDiv.onPointerUp.map(_ => ()),
           )
-        }
       }
 
 
