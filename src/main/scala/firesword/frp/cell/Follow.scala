@@ -1,6 +1,8 @@
 package firesword.frp.cell
 
-import firesword.frp.Frp.{EventStream, SimpleCell, Unsubscribe}
+import firesword.frp.EventStream.EventStream
+import firesword.frp.Frp.Unsubscribe
+import firesword.frp.SimpleCell.SimpleCell
 
 object Follow {
   // TODO: Opt-out

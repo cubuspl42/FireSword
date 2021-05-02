@@ -1,6 +1,7 @@
 package firesword.frp
 
-import firesword.frp.Frp.Cell
+import firesword.frp.Cell.Cell
+import firesword.frp.Frp.Const
 
 import scala.language.implicitConversions
 
@@ -10,6 +11,7 @@ object DynamicList {
       new DynamicList(content.map(_.map(f)))
   }
 
-  implicit def implicitDynamicList[A](list: List[A]): DynamicList[A] =
-    new DynamicList(list)
+  implicit def implicitDynamicList[A](list: List[A]): DynamicList[A] = {
+    new DynamicList(Const(list))
+  }
 }

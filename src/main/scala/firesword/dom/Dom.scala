@@ -1,7 +1,10 @@
 package firesword.dom
 
+import firesword.frp.Cell.Cell
 import firesword.frp.DynamicList.DynamicList
-import firesword.frp.Frp.{Cell, Const, EventStream, SourceEventStream}
+import firesword.frp.EventStream.EventStream
+import firesword.frp.Frp.Const
+import firesword.frp.SourceEventStream.SourceEventStream
 import org.scalajs.dom
 import org.scalajs.dom._
 import org.scalajs.dom.html.Element

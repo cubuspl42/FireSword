@@ -3,11 +3,16 @@ package firesword.app
 import firesword.dom.Dom
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
+import firesword.frp.Cell
+import firesword.frp.Cell.Cell
+import firesword.frp.MutCell.MutCell
 import firesword.frp.DynamicList.implicitDynamicList
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
-import firesword.frp.Frp.{Cell, Const, EventStream, EventStreamSink, MutCell, implicitConst, implicitConstSome}
+import firesword.frp.EventStream.EventStream
+import firesword.frp.EventStreamSink.EventStreamSink
+import firesword.frp.Frp.{Const, implicitConst, implicitConstSome}
 import org.scalajs.dom.ext.KeyValue
-import org.scalajs.dom.{Event, KeyboardEvent, PointerEvent, console, document}
+import org.scalajs.dom._
 import scalacss.StyleA
 
 import scala.language.implicitConversions
@@ -280,6 +285,8 @@ object FireSwordApp {
         tileFragment(coord, tile)
       },
     )
+
+
 
     val tilesOriginDiv = div(
       styleClass = MyStyles.tilesOrigin,

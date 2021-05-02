@@ -1,7 +1,8 @@
 package firesword.frp
 
+import firesword.frp.Cell.Cell
 import firesword.frp.DynamicList.DynamicList
-import firesword.frp.Frp.{Cell, MutCell}
+import firesword.frp.MutCell.MutCell
 
 object DynamicMap {
   abstract class DynamicMap[K, V] {
