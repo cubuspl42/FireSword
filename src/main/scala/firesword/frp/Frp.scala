@@ -1,5 +1,7 @@
 package firesword.frp
 
+import firesword.frp.cell.Follow.CellFollowFirst
+
 import scala.collection.mutable
 import scala.language.implicitConversions
 
@@ -72,13 +74,16 @@ object Frp {
   type Unsubscribe = () => Unit
 
   abstract class EventStream[+A] {
-    def hold[B >: A](initialValue2: B): Cell[B] =
+    def map[B](f: A => B): EventStream[B] =
+      new MapEventStream(this, f)
+
+    def hold[A1 >: A](initialValue2: A1): Cell[A1] =
       new HoldCell(initialValue2, this)
 
     @action
     def listen(@action h: A => Unit): Unit
 
-    private[Frp] def addListener(h: A => Unit): Unit
+    private[frp] def addListener(h: A => Unit): Unsubscribe
 
     private[Frp] def removeListener(h: A => Unit): Unit
 
@@ -88,15 +93,19 @@ object Frp {
   abstract class SimpleEventStream[A] extends EventStream[A] {
     private val listeners = new mutable.HashSet[A => Unit]
 
-    private[Frp] def addListener(h: A => Unit): Unit = {
+    override def addListener(h: A => Unit): Unsubscribe = {
       listeners.addOne(h)
 
       if (listeners.size == 1) {
         onStart()
       }
+
+      () => {
+        removeListener(h)
+      }
     }
 
-    private[Frp] def removeListener(h: A => Unit): Unit = {
+    override def removeListener(h: A => Unit): Unit = {
       listeners.remove(h)
 
       // TODO: onStop
@@ -134,16 +143,32 @@ object Frp {
   }
 
 
-
-
   class SourceEventStream[A](
-                              addListener: Listener[A] => Unsubscribe,
+                              addSourceListener: Listener[A] => Unsubscribe,
                             ) extends SimpleEventStream[A] {
 
     private var unsubscribe: Unsubscribe = _
 
     override protected def onStart(): Unit = {
-      unsubscribe = addListener(notifyListeners)
+      unsubscribe = addSourceListener(notifyListeners)
+    }
+
+    override protected def onStop(): Unit = {
+      unsubscribe()
+      unsubscribe = null
+    }
+  }
+
+  class MapEventStream[A, B](
+                              source: EventStream[A],
+                              f: A => B,
+                            ) extends SimpleEventStream[B] {
+    private var unsubscribe: Unsubscribe = _
+
+    override protected def onStart(): Unit = {
+      unsubscribe = source.addListener(a => {
+        notifyListeners(f(a))
+      })
     }
 
     override protected def onStop(): Unit = {
@@ -157,7 +182,8 @@ object Frp {
 
     def map[B](f: A => B): Cell[B]
 
-    def switchMapC[B](f: A => Cell[B]): Cell[B] = new CellSwitchC[B](this.map(f))
+    def switchMapC[B](f: A => Cell[B]): Cell[B] =
+      Cell.switchC(this.map(f))
 
     private[Frp] def addListener(h: A => Unit): Unsubscribe
 
@@ -170,14 +196,21 @@ object Frp {
     @behavior
     def sample(): A
   }
-  //
-  //    object Cell {
-  //      def switchHoldC[A](initialCell: Cell[A], steps: EventStream[Cell[A]]): Cell[A] =
-  //        ???
-  //    }
 
-  abstract class SimpleCell[A] extends Cell[A] {
-    private val listeners = new mutable.HashSet[A => Unit]
+  object Cell {
+
+    def followFirst[A](a: A, f: A => EventStream[A]): Cell[A] =
+      new CellFollowFirst[A](a, f)
+
+
+    def switchC[A](cca: Cell[Cell[A]]): Cell[A] = new CellSwitchC(cca)
+
+    def switchHoldC[A](initialCell: Cell[A], steps: EventStream[Cell[A]]): Cell[A] =
+      switchC(steps.hold(initialCell))
+  }
+
+  abstract class SimpleCell[+A] extends Cell[A] {
+    private[this] val listeners = new mutable.HashSet[A => Unit]
 
     def map[B](f: A => B): Cell[B] = new MapCell[A, B](this, f)
 
@@ -188,7 +221,7 @@ object Frp {
         onStart()
       }
 
-      return () => {
+      () => {
         removeListener(h)
       }
     }
@@ -197,7 +230,7 @@ object Frp {
       listeners.remove(h)
     }
 
-    protected def notifyListeners(a: A): Unit = {
+    protected[this] def notifyListeners(a: A): Unit = {
       listeners.foreach(h => h(a))
     }
 
@@ -215,8 +248,6 @@ object Frp {
     @behavior
     def sample(): A
   }
-
-
 
 
   class MutCell[A](initValue: A) extends SimpleCell[A] {

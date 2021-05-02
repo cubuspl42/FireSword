@@ -13,13 +13,23 @@ object Dom {
   }
 
   private def elementEventStream[E <: Event](element: Element, eventType: String): EventStream[E] =
-    new SourceEventStream[E](listener => {
-      element.addEventListener(eventType, listener)
-      () => element.removeEventListener(eventType, listener)
+    new SourceEventStream[E](listener_ => {
+      element.addEventListener(eventType, listener_)
+      () => element.removeEventListener(eventType, listener_)
     })
 
   class Widget(val node: Element) {
-    lazy val onPointerDown: EventStream[PointerEvent] = elementEventStream[PointerEvent](node, "pointerdown")
+
+    lazy val onPointerDown: EventStream[PointerEvent] =
+      elementEventStream[PointerEvent](node, "pointerdown")
+
+
+    lazy val onPointerUp: EventStream[PointerEvent] =
+      elementEventStream[PointerEvent](node, "pointerup")
+
+
+    lazy val onPointerMove: EventStream[PointerEvent] =
+      elementEventStream[PointerEvent](node, "pointermove")
   }
 
   def render(target: dom.Node, widget: Widget): Unit = {

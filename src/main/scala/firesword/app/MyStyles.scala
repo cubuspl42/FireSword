@@ -53,6 +53,13 @@ object MyStyles extends StyleSheet.Inline {
   )
 
   val tilesRoot: StyleA = style(
+//    position relative,
+//    pointerEvents none,
+//    left(50 %%),
+//    top(50 %%),
+  )
+
+  val tilesOrigin: StyleA = style(
     position relative,
     pointerEvents none,
     left(50 %%),

@@ -7,30 +7,57 @@ import firesword.frp.DynamicList.implicitDynamicList
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
 import firesword.frp.Frp.{Cell, Const, EventStream, EventStreamSink, MutCell, implicitConst, implicitConstSome}
 import org.scalajs.dom.ext.KeyValue
-import org.scalajs.dom.{Event, KeyboardEvent, console, document}
+import org.scalajs.dom.{Event, KeyboardEvent, PointerEvent, console, document}
 import scalacss.StyleA
 
 import scala.language.implicitConversions
 
 object FireSwordApp {
+  //  implicit class AsInstanceOfOption[T](val self: T) {
+  //    def asOptionOf[T1 <: T]: Option[T1] =
+  //      self match {
+  //        case t: T1 => Some(t)
+  //        case _ => None
+  //      }
+  //  }
+
   case class Vec2(x: Double, y: Double) {
     def +(that: Vec2): Vec2 =
       Vec2(x + that.x, y + that.y)
+
+    def -(that: Vec2): Vec2 =
+      Vec2(x - that.x, y - that.y)
   }
 
   class Camera(initialState: CameraState) {
-    val state: Cell[CameraState] = initialState.nextState.hold(initialState)
+    val state: Cell[CameraState] = initialState.asCell
 
     val focusPoint: Cell[Vec2] = state.switchMapC(_.focusPoint)
+  }
+
+  object CameraEquation {
+    // targetPoint = worldPoint - focusPoint
+
+    def solveForTargetPoint(worldPoint: Vec2, focusPoint: Vec2): Vec2 =
+      worldPoint - focusPoint
+
+    def solveForFocusPoint(worldPoint: Vec2, targetPoint: Vec2): Vec2 =
+      worldPoint - targetPoint
+
+    def solveForWorldPoint(targetPoint: Vec2, focusPoint: Vec2): Vec2 =
+      targetPoint + focusPoint
   }
 
   abstract class CameraState {
     val focusPoint: Cell[Vec2]
 
     val nextState: EventStream[CameraState]
+
+    def asCell: Cell[CameraState] =
+      Cell.switchHoldC(this, nextState.map(_.asCell))
   }
 
-  class FreeCamera(initialFocusPoint: Vec2) extends CameraState {
+  case class FreeCamera(initialFocusPoint: Vec2) extends CameraState {
     private val _focusPoint = new MutCell(initialFocusPoint)
 
     override val focusPoint: Cell[Vec2] = _focusPoint
@@ -45,23 +72,36 @@ object FireSwordApp {
     }
 
     def dragCamera(targetPoint: Cell[Vec2], stop: EventStream[Unit]): Unit = {
-      _nextState.send(new DraggedCamera(
-        targetPoint=targetPoint,
-        anchorPoint = ???,
+      val anchorPoint = CameraEquation.solveForWorldPoint(
+        targetPoint = targetPoint.sample(),
+        focusPoint = focusPoint.sample(),
+      )
+
+      _nextState.send(DraggedCamera(
+        targetPoint = targetPoint,
+        anchorPoint = anchorPoint,
         stop = stop,
       ))
     }
   }
 
-  class DraggedCamera(
-                       targetPoint: Cell[Vec2],
-                       anchorPoint: Vec2,
-                       stop: EventStream[Unit],
-                     ) extends CameraState {
+  case class DraggedCamera(
+                            targetPoint: Cell[Vec2],
+                            anchorPoint: Vec2,
+                            stop: EventStream[Unit],
+                          ) extends CameraState {
+    override val focusPoint: Cell[Vec2] = targetPoint.map(tp =>
+      CameraEquation.solveForFocusPoint(
+        worldPoint = anchorPoint,
+        targetPoint = tp,
+      ),
+    )
 
-    override val focusPoint: Cell[Vec2] = ???
-
-    override val nextState: EventStream[CameraState] = ???
+    override val nextState: EventStream[CameraState] =
+      stop.map(_ => {
+        println("FreeCamera")
+        FreeCamera(focusPoint.sample())
+      })
   }
 
 
@@ -91,23 +131,24 @@ object FireSwordApp {
     val zoom: Cell[Double] = _zoom
 
     def zoomCamera(delta: Double): Unit = {
-      val oldZoom = _zoom.sample()
-      _zoom.set(oldZoom + delta)
+      //      _zoom.update(_ + delta)
     }
 
-    val _cameraPosition = new MutCell(Vec2(0.0, 0.0))
+    val camera = new Camera(new FreeCamera(Vec2(0.0, 0.0)))
 
-    val cameraPosition: Cell[Vec2] = _cameraPosition
+    //    val _cameraPosition = new MutCell(Vec2(0.0, 0.0))
+
+    val cameraPosition: Cell[Vec2] = camera.focusPoint
 
 
-    def moveCamera(delta: Vec2): Unit = {
-      val oldPosition = _cameraPosition.sample()
-      _cameraPosition.set(oldPosition + delta)
-    }
+    //    def moveCamera(delta: Vec2): Unit = {
+    //      val oldPosition = _cameraPosition.sample()
+    //      _cameraPosition.set(oldPosition + delta)
+    //    }
 
-    def dragCamera(targetPosition: Cell[Vec2], stop: EventStream[Unit]): Unit = {
-
-    }
+    //    def dragCamera(targetPosition: Cell[Vec2], stop: EventStream[Unit]): Unit = {
+    //
+    //    }
 
     def hoverTile(coord: TileCoord): Unit = {
       _hoveredTile.set(coord)
@@ -124,7 +165,7 @@ object FireSwordApp {
       _tiles.put(coord, tileId)
     }
 
-    def getTileCoordAtPoint(x: Double, y: Double) =
+    def getTileCoordAtPoint(x: Double, y: Double): TileCoord =
       TileCoord(
         (y / tileSize).toInt,
         (x / tileSize).toInt,
@@ -171,7 +212,7 @@ object FireSwordApp {
           case _ => None
         }
 
-        deltaV.foreach(editor.moveCamera)
+        //        deltaV.foreach(editor.moveCamera)
       }
 
       {
@@ -214,11 +255,11 @@ object FireSwordApp {
       )
     }
 
-
-    val inlineStyle = editor.cameraPosition.map(p =>
-      s"transform-origin: top left; transform: scale(1.5) translate(${-p.x}px, ${-p.y}px);"
-    )
-
+    val inlineStyle = editor.cameraPosition.map(p => {
+      //      println(p)
+      //      console.log(p.toString)
+      s"transform-origin: top left; transform: scale(1.0) translate(${-p.x}px, ${-p.y}px);"
+    })
 
     val tilesRootDiv = div(
       styleClass = MyStyles.tilesRoot,
@@ -228,18 +269,54 @@ object FireSwordApp {
       },
     )
 
-    val tilesViewDiv = div(
-      styleClass = MyStyles.tilesView,
-      children = List(tilesRootDiv)
+    val tilesOriginDiv = div(
+      styleClass = MyStyles.tilesOrigin,
+      children = List(tilesRootDiv),
     )
 
-    tilesViewDiv.onPointerDown.listen(e => {
-      val rect = tilesRootDiv.node.getBoundingClientRect()
+    val tilesViewDiv = div(
+      styleClass = MyStyles.tilesView,
+      children = List(tilesOriginDiv)
+    )
+
+    def calculateTargetPoint(e: PointerEvent): Vec2 = {
+      val rect = tilesOriginDiv.node.getBoundingClientRect()
       val x = e.clientX - rect.left
       val y = e.clientY - rect.top
 
-      console.log(s"Pointer event @ $x, $y")
-      editor.insertTile(editor.getTileCoordAtPoint(x, y))
+      Vec2(x, y)
+    }
+
+    tilesViewDiv.onPointerDown.listen(e => {
+      val cameraState = editor.camera.state.sample()
+
+      cameraState match {
+        case freeCamera: FreeCamera => {
+
+          val targetPoint = tilesViewDiv.onPointerMove.hold(e)
+            .map(calculateTargetPoint)
+
+//          tilesViewDiv.node.addEventListener("pointerup", e => {
+//            println("Pointer up! (side)")
+//          })
+
+          freeCamera.dragCamera(
+            targetPoint = targetPoint,
+            stop = tilesViewDiv.onPointerUp.map(_ => {
+              println("Pointer up! (Stream.map)")
+              ()
+            }),
+          )
+        }
+      }
+
+
+      //      val rect = tilesRootDiv.node.getBoundingClientRect()
+      //      val x = e.clientX - rect.left
+      //      val y = e.clientY - rect.top
+      //
+      //      console.log(s"Pointer event @ $x, $y")
+      //      editor.insertTile(editor.getTileCoordAtPoint(x, y))
     })
 
     tilesViewDiv
