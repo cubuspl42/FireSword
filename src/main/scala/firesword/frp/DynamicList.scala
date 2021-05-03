@@ -11,7 +11,25 @@ object DynamicList {
       new DynamicList(content.map(_.map(f)))
   }
 
-  implicit def implicitDynamicList[A](list: List[A]): DynamicList[A] = {
-    new DynamicList(Const(list))
+  def empty[A](): DynamicList[A]=
+    new DynamicList(Const(List()))
+
+  def singleton[A](cell: Cell[A]): DynamicList[A]=
+    new DynamicList(cell.map(List(_)))
+
+  object Implicits {
+    implicit def implicitSingleton[A](ca: Cell[A]): DynamicList[A] =
+      singleton(ca)
+
+    implicit def implicitStaticSingleton[A](a: A): DynamicList[A] =
+      singleton(Const(a))
+
+    implicit def implicitStatic[A](list: List[A]): DynamicList[A] = {
+      new DynamicList(Const(list))
+    }
+
+    implicit def implicitDynamicList[A](list: List[A]): DynamicList[A] = {
+      new DynamicList(Const(list))
+    }
   }
 }

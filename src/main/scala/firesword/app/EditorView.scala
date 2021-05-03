@@ -4,17 +4,21 @@ import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
 import firesword.frp.Cell
 import firesword.frp.Cell.Cell
-import firesword.frp.DynamicList.implicitDynamicList
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
 import firesword.frp.EventStream.EventStream
 import firesword.frp.EventStreamSink.EventStreamSink
 import firesword.frp.Frp.{Const, implicitConst, implicitConstSome}
 import firesword.frp.MutCell.MutCell
 import org.scalajs.dom._
+import org.scalajs.dom.experimental.Fetch.fetch
 import org.scalajs.dom.ext.KeyValue
 import scalacss.StyleA
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Future, Promise}
 import scala.language.implicitConversions
+import scala.scalajs.js
+import scala.scalajs.js.typedarray.ArrayBuffer
 
 object EditorView {
   //  implicit class AsInstanceOfOption[T](val self: T) {
@@ -132,7 +136,9 @@ object EditorView {
 
   type Tile = Int
 
-  class Editor {
+  class Editor(
+                worldBuffer: ArrayBuffer,
+              ) {
 
     private val _hoveredTile = new MutCell[TileCoord](TileCoord(5, 8))
 
@@ -196,8 +202,29 @@ object EditorView {
       )
   }
 
-  def editorView(): Widget = {
-    val editor = new Editor()
+  object Editor {
+    def delay(milliseconds: Int): Future[Unit] = {
+      val p = Promise[Unit]()
+      js.timers.setTimeout(milliseconds) {
+        p.success(())
+      }
+      p.future
+    }
+
+    def load(): Future[Editor] = {
+      for (
+        response <- fetch("assets/worlds/WORLD.WWD").toFuture;
+        worldBuffer <- response.arrayBuffer().toFuture;
+        _ <- delay(2000)
+      ) yield {
+        console.log(worldBuffer)
+        new Editor(worldBuffer)
+      }
+    }
+  }
+
+  def editorView(editor: Editor): Widget = {
+    import firesword.frp.DynamicList.Implicits.implicitStatic
 
     document.body.addEventListener("keydown", (e: KeyboardEvent) => {
       import firesword.frp.Frp.implicitSome
@@ -234,6 +261,7 @@ object EditorView {
       }
     })
 
+
     val theDiv = div(
       styleClass = MyStyles.editorView,
       children = List(
@@ -246,6 +274,8 @@ object EditorView {
   }
 
   def tilesView(editor: Editor): Widget = {
+    import firesword.frp.DynamicList.Implicits.implicitStatic
+
     def tileFragment(coord: TileCoord, tile: Tile) = {
       val left = coord.j * tileSize
       val top = coord.i * tileSize
@@ -266,8 +296,9 @@ object EditorView {
     val inlineStyle = Cell.map2(
       editor.cameraFocusPoint,
       editor.cameraZoom,
-      (fp: Vec2, z: Double) =>
-        s"transform-origin: top left; transform: scale($z) translate(${-fp.x}px, ${-fp.y}px);"
+      (fp: Vec2, z: Double) => "" ++
+        s"transform-origin: top left; " ++
+        s"transform: scale($z) translate(${-fp.x}px, ${-fp.y}px);"
     )
 
     val tilesRootDiv = div(
@@ -320,49 +351,5 @@ object EditorView {
     })
 
     tilesViewDiv
-  }
-
-  def checkersView(editor: Editor): Widget = {
-    def tableCell(i: Int, j: Int, style: StyleA) = {
-      val effectiveStyle = editor.hoveredTile.map(ht => Some(
-        if (ht == TileCoord(i, j)) MyStyles.tdHovered
-        else style
-      ))
-
-      val theDiv = div(
-        List(),
-        styleClass = effectiveStyle,
-        inlineStyle = Const(""),
-      )
-
-      theDiv.onPointerDown.listen(_ => {
-        editor.hoverTile(TileCoord(i, j))
-      })
-
-      theDiv
-    }
-
-    def tableRow(i: Int, isEven: Boolean) = {
-      val deltaJ = if (isEven) 1 else 0
-
-      div(
-        styleClass = MyStyles.tr,
-        children = (1 to 16).map(j =>
-          if ((j + deltaJ) % 2 == 0)
-            tableCell(i, j, MyStyles.td1)
-          else
-            tableCell(i, j, MyStyles.td2)
-        ).toList
-      )
-    }
-
-    implicitConst()
-
-    div(
-      styleClass = MyStyles.table,
-      children = (1 to 16).map(i =>
-        tableRow(i, isEven = i % 2 == 0)
-      ).toList
-    )
   }
 }

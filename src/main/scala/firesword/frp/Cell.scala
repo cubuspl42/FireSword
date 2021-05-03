@@ -2,9 +2,11 @@ package firesword.frp
 
 import firesword.frp.EventStream.EventStream
 import firesword.frp.Frp.{Unsubscribe, action, behavior}
+import firesword.frp.cell.CellFromFuture.CellFromFuture
 import firesword.frp.cell.Follow.CellFollowFirst
 import firesword.frp.cell.SwitchC.CellSwitchC
 
+import scala.concurrent.Future
 import scala.language.implicitConversions
 
 object Cell {
@@ -41,4 +43,17 @@ object Cell {
 
   def switchHoldC[A](initialCell: Cell[A], steps: EventStream[Cell[A]]): Cell[A] =
     switchC(steps.hold(initialCell))
+
+  def fromFuture[A, B](
+                        future: Future[A],
+                        notCompleted: => B,
+                        successfullyCompleted: A => B,
+                        failed: Throwable => B,
+                      ): Cell[B] =
+    new CellFromFuture(
+      future = future,
+      notCompleted = notCompleted,
+      successfullyCompleted = successfullyCompleted,
+      failed = failed,
+    )
 }

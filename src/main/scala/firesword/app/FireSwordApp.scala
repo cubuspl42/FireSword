@@ -1,11 +1,10 @@
 package firesword.app
 
-import firesword.app.EditorView.editorView
+import firesword.app.EditorView.{Editor, editorView}
 import firesword.dom.Dom
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
-import firesword.frp.DynamicList.implicitDynamicList
-import firesword.frp.Frp.implicitConstSome
+import firesword.frp.{Cell, DynamicList}
 import org.scalajs.dom._
 import org.scalajs.dom.ext.KeyValue
 import pako.Pako
@@ -41,11 +40,29 @@ object FireSwordApp {
   }
 
   def rootView(): Widget = {
+    import firesword.frp.Frp.implicitConstSome
+    import firesword.frp.Frp.implicitConst
+    import firesword.frp.DynamicList.Implicits.implicitStaticSingleton
+    import firesword.frp.DynamicList.Implicits.implicitSingleton
+
+    val editorFuture = Editor.load()
+
+    val child = Cell.fromFuture(
+      future = editorFuture,
+      notCompleted = div(
+        styleClass = MyStyles.center,
+        children = span("Loading..."),
+      ),
+      successfullyCompleted = editorView,
+      failed = (_: Throwable) => div(
+        styleClass = MyStyles.center,
+        children = span("Error"),
+      ),
+    )
+
     val theDiv = div(
       styleClass = MyStyles.root,
-      children = List(
-        editorView(),
-      ),
+      children = child,
     )
 
     theDiv

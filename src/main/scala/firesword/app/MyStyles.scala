@@ -8,14 +8,18 @@ object MyStyles extends StyleSheet.Inline {
 
   import dsl._
 
+  val center: StyleA = style(
+    height(100 %%),
+    display flex,
+    alignItems center,
+    justifyContent center,
+  )
+
   val root: StyleA = style(
     width(100 vw),
     height(100 vh),
     backgroundColor silver,
-
-
   )
-
 
   val table: StyleA = style(
     display table,

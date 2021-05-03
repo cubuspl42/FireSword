@@ -1,6 +1,7 @@
 package firesword.dom
 
 import firesword.frp.Cell.Cell
+import firesword.frp.DynamicList
 import firesword.frp.DynamicList.DynamicList
 import firesword.frp.EventStream.EventStream
 import firesword.frp.Frp.Const
@@ -63,7 +64,7 @@ object Dom {
     }
 
     def div(
-             children: DynamicList[Widget] = List(),
+             children: DynamicList[Widget] = DynamicList.empty(),
              styleClass: Cell[Option[StyleA]] = Const(None),
              inlineStyle: Cell[String] = Const(""),
            ): Widget = {
@@ -86,6 +87,19 @@ object Dom {
         children.foreach(c => {
           element.appendChild(c.node)
         })
+      })
+
+      new Widget(element)
+    }
+
+    def singletonDiv(
+                      child: Cell[Widget],
+                    ): Widget = {
+      val element = document.createElement("div").asInstanceOf[Element]
+
+      child.listen(c => {
+        clearElement(element)
+        element.appendChild(c.node)
       })
 
       new Widget(element)
