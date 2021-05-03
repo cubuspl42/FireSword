@@ -7,14 +7,13 @@ import firesword.frp.Cell.Cell
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
 import firesword.frp.EventStream.EventStream
 import firesword.frp.EventStreamSink.EventStreamSink
-import firesword.frp.Frp.{Const, implicitConst, implicitConstSome}
+import firesword.frp.Frp.{implicitConst, implicitConstSome}
 import firesword.frp.MutCell.MutCell
 import firesword.wwd.Wwd.readWorld
 import org.scalajs.dom._
 import org.scalajs.dom.experimental.Fetch.fetch
 import org.scalajs.dom.experimental.Response
 import org.scalajs.dom.ext.KeyValue
-import scalacss.StyleA
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -23,14 +22,6 @@ import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 
 object EditorView {
-  //  implicit class AsInstanceOfOption[T](val self: T) {
-  //    def asOptionOf[T1 <: T]: Option[T1] =
-  //      self match {
-  //        case t: T1 => Some(t)
-  //        case _ => None
-  //      }
-  //  }
-
   case class Vec2(x: Double, y: Double) {
     def *(s: Double): Vec2 =
       Vec2(x * s, y * s)
@@ -144,22 +135,39 @@ object EditorView {
 
     private val world = readWorld(worldBuffer)
 
+    private def loadTiles(): Map[TileCoord, Int] = {
+      val plane = world.planes(1)
+
+      val entries = for (
+        i <- (0 until plane.tilesHigh);
+        j <- (0 until plane.tilesWide)
+      ) yield {
+        val k = i * plane.tilesWide + j
+        val tile = plane.tiles(k)
+        TileCoord(i, j) -> tile
+      }
+
+      entries.filter(_._2 > 0).toMap
+    }
+
     println(world)
 
     private val _hoveredTile = new MutCell[TileCoord](TileCoord(5, 8))
 
-    private val _tiles = new MutDynamicMap(Map(
-      TileCoord(0, 0) -> 1,
-      TileCoord(0, 1) -> 2,
-      TileCoord(1, 0) -> 3,
-      TileCoord(1, 1) -> 4,
-    ))
+//    private val _tiles = new MutDynamicMap(Map(
+//      TileCoord(0, 0) -> 1,
+//      TileCoord(0, 1) -> 2,
+//      TileCoord(1, 0) -> 3,
+//      TileCoord(1, 1) -> 4,
+//    ))
+
+    private val _tiles = new MutDynamicMap(loadTiles())
 
     val tiles: DynamicMap[TileCoord, Tile] = _tiles
 
     val hoveredTile: Cell[TileCoord] = _hoveredTile
 
-    val _zoom = new MutCell(1.0)
+    val _zoom = new MutCell(0.1)
 
     val cameraZoom: Cell[Double] = _zoom
 
