@@ -13,9 +13,11 @@ import firesword.frp.Frp.{Const, implicitConst, implicitConstSome}
 import firesword.frp.MutCell.MutCell
 import org.scalajs.dom._
 import org.scalajs.dom.ext.KeyValue
+import pako.Pako
 import scalacss.StyleA
 
 import scala.language.implicitConversions
+import scala.scalajs.js.typedarray.Uint8Array
 
 object FireSwordApp {
   //  implicit class AsInstanceOfOption[T](val self: T) {
@@ -201,6 +203,8 @@ object FireSwordApp {
     document.addEventListener("DOMContentLoaded", (_: Event) => {
       render()
     })
+
+    Pako.inflate(new Uint8Array(1024))
   }
 
   private def renderCss(): Unit = {
