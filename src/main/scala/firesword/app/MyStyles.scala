@@ -14,9 +14,8 @@ object MyStyles extends StyleSheet.Inline {
     backgroundColor silver,
 
 
-    display flex,
-    flexDirection column,
   )
+
 
   val table: StyleA = style(
     display table,
@@ -47,16 +46,24 @@ object MyStyles extends StyleSheet.Inline {
     backgroundColor blue,
   )
 
+  val editorView: StyleA = style(
+    width(100 %%),
+    height(100 %%),
+
+    display flex,
+    flexDirection column,
+  )
+
   val tilesView: StyleA = style(
     flexGrow(1),
     overflow hidden,
   )
 
   val tilesRoot: StyleA = style(
-//    position relative,
-//    pointerEvents none,
-//    left(50 %%),
-//    top(50 %%),
+    //    position relative,
+    //    pointerEvents none,
+    //    left(50 %%),
+    //    top(50 %%),
   )
 
   val tilesOrigin: StyleA = style(
