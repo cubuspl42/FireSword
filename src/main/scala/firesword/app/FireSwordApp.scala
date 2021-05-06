@@ -1,17 +1,13 @@
 package firesword.app
 
-import firesword.app.EditorView.{Editor, editorView}
+import firesword.app.EditorView.editorView
 import firesword.dom.Dom
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
-import firesword.frp.{Cell, DynamicList}
+import firesword.frp.Cell
 import org.scalajs.dom._
-import org.scalajs.dom.ext.KeyValue
-import pako.Pako
-import scalacss.StyleA
 
 import scala.language.implicitConversions
-import scala.scalajs.js.typedarray.Uint8Array
 
 object FireSwordApp {
   def main(args: Array[String]): Unit = {
@@ -38,10 +34,8 @@ object FireSwordApp {
   }
 
   def rootView(): Widget = {
-    import firesword.frp.Frp.implicitConstSome
-    import firesword.frp.Frp.implicitConst
-    import firesword.frp.DynamicList.Implicits.implicitStaticSingleton
-    import firesword.frp.DynamicList.Implicits.implicitSingleton
+    import firesword.frp.DynamicList.Implicits.{implicitSingleton, implicitStaticSingleton}
+    import firesword.frp.Frp.{implicitConst, implicitConstSome}
 
     val editorFuture = Editor.load()
 

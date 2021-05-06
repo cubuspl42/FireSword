@@ -1,22 +1,17 @@
 package firesword.app
 
-import firesword.app.EditorView.{Editor, FreeCamera, Tile, TileCoord, Vec2}
-import firesword.app.TilesView.TileImageBank.tileIndexToPidFilename
+import firesword.app.Editor.{Editor, FreeCamera, Vec2}
 import firesword.dom.Dom.Tag.div
 import firesword.dom.Dom.Widget
 import firesword.frp.Cell
 import firesword.frp.Cell.Cell
 import firesword.scalajsdomext.HTMLImageElementExt.implicitHTMLImageElementExt
-import org.scalajs.dom
 import org.scalajs.dom._
-import org.scalajs.dom.html.{Canvas, Image}
-import org.scalajs.dom.raw.{HTMLElement, HTMLImageElement}
+import org.scalajs.dom.html.Canvas
+import org.scalajs.dom.raw.HTMLImageElement
 
-import scala.collection.BuildFrom
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.ExecutionContext.parasitic
-import scala.concurrent.Future.successful
-import scala.concurrent.{BatchingExecutor, ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.scalajs.js.Promise
 
