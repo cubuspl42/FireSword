@@ -1,5 +1,7 @@
 package firesword.app
 
+import firesword.app.TilesView.TileImageBank.loadImage
+import firesword.app.TilesView.{TileImageBank, tilesView, tilesViewOuter}
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
 import firesword.frp.Cell
@@ -14,6 +16,7 @@ import org.scalajs.dom._
 import org.scalajs.dom.experimental.Fetch.fetch
 import org.scalajs.dom.experimental.Response
 import org.scalajs.dom.ext.KeyValue
+import org.scalajs.dom.raw.HTMLImageElement
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -37,8 +40,6 @@ object EditorView {
   }
 
   class Camera(initialState: CameraState) {
-    //    val state: Cell[CameraState] = initialState.asCell
-
     val state: Cell[CameraState] =
       Cell.followFirst[CameraState](initialState, _.nextState)
 
@@ -64,9 +65,6 @@ object EditorView {
     val focusPoint: Cell[Vec2]
 
     val nextState: EventStream[CameraState]
-
-    //    def asCell: Cell[CameraState] =
-    //      Cell.switchHoldC(this, nextState.map(_.asCell))
   }
 
   case class FreeCamera(initialFocusPoint: Vec2, zoom: Cell[Double]) extends CameraState {
@@ -131,6 +129,7 @@ object EditorView {
 
   class Editor(
                 worldBuffer: ArrayBuffer,
+                val tileImageBank: TileImageBank,
               ) {
 
     private val world = readWorld(worldBuffer)
@@ -150,16 +149,7 @@ object EditorView {
       entries.filter(_._2 > 0).toMap
     }
 
-    println(world)
-
     private val _hoveredTile = new MutCell[TileCoord](TileCoord(5, 8))
-
-    //    private val _tiles = new MutDynamicMap(Map(
-    //      TileCoord(0, 0) -> 1,
-    //      TileCoord(0, 1) -> 2,
-    //      TileCoord(1, 0) -> 3,
-    //      TileCoord(1, 1) -> 4,
-    //    ))
 
     private val _tiles = new MutDynamicMap(loadTiles())
 
@@ -167,7 +157,7 @@ object EditorView {
 
     val hoveredTile: Cell[TileCoord] = _hoveredTile
 
-    val _zoom = new MutCell(0.1)
+    val _zoom = new MutCell(1.0)
 
     val cameraZoom: Cell[Double] = _zoom
 
@@ -176,23 +166,11 @@ object EditorView {
     }
 
     val camera = new Camera(FreeCamera(
-      initialFocusPoint = Vec2(0.0, 0.0),
+      initialFocusPoint = Vec2(world.startX, world.startY),
       zoom = cameraZoom,
     ))
 
-    //    val _cameraPosition = new MutCell(Vec2(0.0, 0.0))
-
     val cameraFocusPoint: Cell[Vec2] = camera.focusPoint
-
-
-    //    def moveCamera(delta: Vec2): Unit = {
-    //      val oldPosition = _cameraPosition.sample()
-    //      _cameraPosition.set(oldPosition + delta)
-    //    }
-
-    //    def dragCamera(targetPosition: Cell[Vec2], stop: EventStream[Unit]): Unit = {
-    //
-    //    }
 
     def hoverTile(coord: TileCoord): Unit = {
       _hoveredTile.set(coord)
@@ -233,14 +211,22 @@ object EditorView {
       }
     }
 
-    def load(): Future[Editor] = {
+    private def fetchWorldBuffer(): Future[ArrayBuffer] =
       for (
         response <- fetch("assets/worlds/WORLD.WWD").toFuture
           .map(failOnUnsuccessfulResponse);
-        worldBuffer <- response.arrayBuffer().toFuture;
-        _ <- delay(2000)
+        worldBuffer <- response.arrayBuffer().toFuture
+      ) yield worldBuffer
+
+    def load(): Future[Editor] = {
+      for (
+        worldBuffer <- fetchWorldBuffer();
+        tileImageBank <- TileImageBank.load()
       ) yield {
-        new Editor(worldBuffer)
+        new Editor(
+          worldBuffer = worldBuffer,
+          tileImageBank = tileImageBank,
+        )
       }
     }
   }
@@ -288,94 +274,10 @@ object EditorView {
       styleClass = MyStyles.editorView,
       children = List(
         span(editor.hoveredTile.map(_.toString)),
-        tilesView(editor),
+        tilesViewOuter(editor),
       ),
     )
 
     theDiv
-  }
-
-  def tilesView(editor: Editor): Widget = {
-    import firesword.frp.DynamicList.Implicits.implicitStatic
-
-    def tileFragment(coord: TileCoord, tile: Tile) = {
-      val left = coord.j * tileSize
-      val top = coord.i * tileSize
-
-      val styleClass =
-        if ((coord.j + (coord.i % 2)) % 2 == 0) MyStyles.tileFragment1
-        else MyStyles.tileFragment2
-
-      val tilePaddedId = f"${tile}%03d"
-
-      div(
-        styleClass = styleClass,
-        inlineStyle = "" +
-          s"""background-image: url("/assets/images/CLAW/LEVEL1/TILES/ACTION/${tilePaddedId}.png");""" +
-          s"left: ${left}px; top: ${top}px;",
-        children = List(
-          p(s"$tile")
-        )
-      )
-    }
-
-    val inlineStyle = Cell.map2(
-      editor.cameraFocusPoint,
-      editor.cameraZoom,
-      (fp: Vec2, z: Double) => "" ++
-        s"transform-origin: top left; " ++
-        s"transform: scale($z) translate(${-fp.x}px, ${-fp.y}px);"
-    )
-
-    val tilesRootDiv = div(
-      styleClass = MyStyles.tilesRoot,
-      inlineStyle = inlineStyle,
-      children = editor.tiles.toList.map { case (coord, tile) =>
-        tileFragment(coord, tile)
-      },
-    )
-
-    val tilesOriginDiv = div(
-      styleClass = MyStyles.tilesOrigin,
-      children = List(tilesRootDiv),
-    )
-
-    val tilesViewDiv = div(
-      styleClass = MyStyles.tilesView,
-      children = List(tilesOriginDiv)
-    )
-
-    def calculateTargetPoint(e: PointerEvent): Vec2 = {
-      val rect = tilesOriginDiv.node.getBoundingClientRect()
-      val x = e.clientX - rect.left
-      val y = e.clientY - rect.top
-
-      Vec2(x, y)
-    }
-
-    tilesViewDiv.onPointerDown.listen(e => {
-      val cameraState = editor.camera.state.sample()
-
-      cameraState match {
-        case freeCamera: FreeCamera =>
-          val targetPoint = tilesViewDiv.onPointerMove.hold(e)
-            .map(calculateTargetPoint)
-
-          freeCamera.dragCamera(
-            targetPoint = targetPoint,
-            stop = tilesViewDiv.onPointerUp.map(_ => ()),
-          )
-      }
-
-
-      //      val rect = tilesRootDiv.node.getBoundingClientRect()
-      //      val x = e.clientX - rect.left
-      //      val y = e.clientY - rect.top
-      //
-      //      console.log(s"Pointer event @ $x, $y")
-      //      editor.insertTile(editor.getTileCoordAtPoint(x, y))
-    })
-
-    tilesViewDiv
   }
 }
