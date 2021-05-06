@@ -1,6 +1,7 @@
 package firesword.app
 
-import firesword.app.Editor.{Editor, FreeCamera, Vec2}
+import firesword.app.Camera.FreeCamera
+import firesword.app.Editor.{Editor, Vec2}
 import firesword.dom.Dom.Tag.div
 import firesword.dom.Dom.Widget
 import firesword.frp.Cell

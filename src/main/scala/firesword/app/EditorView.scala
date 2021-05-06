@@ -1,29 +1,15 @@
 package firesword.app
 
-import firesword.app.Editor.{Editor, FreeCamera, Vec2}
-import firesword.app.TilesView.TileImageBank.loadImage
-import firesword.app.TilesView.{TileImageBank, tilesView, tilesViewOuter}
+import firesword.app.Camera.FreeCamera
+import firesword.app.Editor.{Editor, Vec2}
+import firesword.app.TilesView.tilesViewOuter
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
-import firesword.frp.Cell
-import firesword.frp.Cell.Cell
-import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
-import firesword.frp.EventStream.EventStream
-import firesword.frp.EventStreamSink.EventStreamSink
-import firesword.frp.Frp.{implicitConst, implicitConstSome}
-import firesword.frp.MutCell.MutCell
-import firesword.wwd.Wwd.readWorld
+import firesword.frp.Frp.implicitConstSome
 import org.scalajs.dom._
-import org.scalajs.dom.experimental.Fetch.fetch
-import org.scalajs.dom.experimental.Response
 import org.scalajs.dom.ext.KeyValue
-import org.scalajs.dom.raw.HTMLImageElement
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, Promise}
 import scala.language.implicitConversions
-import scala.scalajs.js
-import scala.scalajs.js.typedarray.ArrayBuffer
 
 object EditorView {
   def editorView(editor: Editor): Widget = {
