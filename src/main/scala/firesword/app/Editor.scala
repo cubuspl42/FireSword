@@ -1,6 +1,7 @@
 package firesword.app
 
 import firesword.app.Camera.{Camera, FreeCamera}
+import firesword.app.EdObject.EdObject
 import firesword.app.TilesView.TileImageBank
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
@@ -39,13 +40,17 @@ object Editor {
 
   class Editor(
                 worldBuffer: ArrayBuffer,
-                val tileImageBank: TileImageBank,
+                val resourceBank: ResourceBank,
               ) {
+
+    val tileImageBank = resourceBank.tileImageBank
 
     private val world = readWorld(worldBuffer)
 
+    private       val plane = world.planes(1)
+
+
     private def loadTiles(): Map[TileCoord, Int] = {
-      val plane = world.planes(1)
 
       val entries = for (
         i <- (0 until plane.tilesHigh);
@@ -64,6 +69,10 @@ object Editor {
     private val _tiles = new MutDynamicMap(loadTiles())
 
     val tiles: DynamicMap[TileCoord, Tile] = _tiles
+
+    val objects: Set[EdObject] = plane.objects.map(wObject => {
+      new EdObject(Vec2(wObject.x, wObject.y))
+    }).toSet
 
     val hoveredTile: Cell[TileCoord] = _hoveredTile
 
@@ -130,11 +139,11 @@ object Editor {
   def load(): Future[Editor] = {
     for (
       worldBuffer <- fetchWorldBuffer();
-      tileImageBank <- TileImageBank.load()
+      resourceBank <- ResourceBank.load()
     ) yield {
       new Editor(
         worldBuffer = worldBuffer,
-        tileImageBank = tileImageBank,
+        resourceBank = resourceBank,
       )
     }
   }
