@@ -154,12 +154,12 @@ object EditorView {
 
     private val _hoveredTile = new MutCell[TileCoord](TileCoord(5, 8))
 
-//    private val _tiles = new MutDynamicMap(Map(
-//      TileCoord(0, 0) -> 1,
-//      TileCoord(0, 1) -> 2,
-//      TileCoord(1, 0) -> 3,
-//      TileCoord(1, 1) -> 4,
-//    ))
+    //    private val _tiles = new MutDynamicMap(Map(
+    //      TileCoord(0, 0) -> 1,
+    //      TileCoord(0, 1) -> 2,
+    //      TileCoord(1, 0) -> 3,
+    //      TileCoord(1, 1) -> 4,
+    //    ))
 
     private val _tiles = new MutDynamicMap(loadTiles())
 
@@ -306,9 +306,13 @@ object EditorView {
         if ((coord.j + (coord.i % 2)) % 2 == 0) MyStyles.tileFragment1
         else MyStyles.tileFragment2
 
+      val tilePaddedId = f"${tile}%03d"
+
       div(
         styleClass = styleClass,
-        inlineStyle = s"left: ${left}px; top: ${top}px;",
+        inlineStyle = "" +
+          s"""background-image: url("/assets/images/CLAW/LEVEL1/TILES/ACTION/${tilePaddedId}.png");""" +
+          s"left: ${left}px; top: ${top}px;",
         children = List(
           p(s"$tile")
         )
