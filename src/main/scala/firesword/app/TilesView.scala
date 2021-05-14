@@ -1,11 +1,15 @@
 package firesword.app
 
+import firesword.app
 import firesword.app.Camera.FreeCamera
+import firesword.app.EdObject.EdObject
 import firesword.app.Editor.{Editor, Vec2}
+import firesword.app.Transform.{scale, translate}
 import firesword.dom.Dom.Tag.div
 import firesword.dom.Dom.Widget
-import firesword.frp.Cell
+import firesword.frp.{Cell, DynamicList}
 import firesword.frp.Cell.Cell
+import firesword.frp.Frp.Const
 import firesword.scalajsdomext.HTMLImageElementExt.implicitHTMLImageElementExt
 import firesword.wwd.Wwd.DrawFlags
 import org.scalajs.dom._
@@ -103,13 +107,18 @@ object TilesView {
 
     val ctx = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]
 
-    var isDirty = false
+    var isDirty = true
 
     drawFn.listen(_ => {
       isDirty = true
     })
 
+    var i = 0
+
     def requestDraw(): Unit = {
+      //      i += 1
+      //      if (i > 1024) return
+
       window.requestAnimationFrame(t => {
         val rect = canvas.getBoundingClientRect()
 
@@ -143,6 +152,17 @@ object TilesView {
     new Widget(canvas)
   }
 
+  def widgetV(widget: Widget, e: MouseEvent): Vec2 = {
+    //    val rect = widget.node.getBoundingClientRect()
+    //    val x = e.clientX - rect.left
+    //    val y = e.clientY - rect.top
+
+    val x = e.clientX
+    val y = e.clientY
+
+    Vec2(x, y)
+  }
+
   def tilesViewOuter(editor: Editor): Widget = {
     import firesword.frp.DynamicList.Implicits.implicitStatic
     import firesword.frp.Frp.implicitConstSome
@@ -152,12 +172,8 @@ object TilesView {
       children = List(tilesView(editor))
     )
 
-    def calculateTargetPoint(e: PointerEvent): Vec2 = {
-      val rect = tilesViewDiv.node.getBoundingClientRect()
-      val x = e.clientX - rect.left
-      val y = e.clientY - rect.top
-
-      Vec2(x, y)
+    def calculateTargetPoint(e: MouseEvent): Vec2 = {
+      widgetV(tilesViewDiv, e)
     }
 
     tilesViewDiv.onPointerDown.listen(e => {
@@ -165,7 +181,7 @@ object TilesView {
 
       cameraState match {
         case freeCamera: FreeCamera =>
-          val targetPoint = tilesViewDiv.onPointerMove.hold(e)
+          val targetPoint = tilesViewDiv.onMouseMove.hold(e)
             .map(calculateTargetPoint)
 
           freeCamera.dragCamera(
@@ -180,80 +196,204 @@ object TilesView {
 
 
   def tilesView(editor: Editor): Widget = {
+    import Transform._
+
+
     val tiles = editor.tiles.content.sample()
+    //      .take(1000)
+
     val objects = editor.objects
 
-    val drawFn = Cell.map2(
+
+    val cameraTransform = Cell.map2(
       editor.cameraFocusPoint,
       editor.cameraZoom,
-      (fp: Vec2, z: Double) =>
-        (ctx: CanvasRenderingContext2D) => {
-          import Transform._
+      (fp: Vec2, z: Double) => {
+        //  translate(canvasSize / 2) *
+        scale(z) * translate(fp * -1)
+      },
+    );
 
-          val canvas = ctx.canvas
-          val canvasSize = Vec2(canvas.width, canvas.height)
+    def drawObject(ctx: CanvasRenderingContext2D, cameraTransform: Transform, obj: EdObject) = {
+      val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
 
-          val camera = translate(canvasSize / 2) * scale(z) * translate(fp * -1)
+      val imageSetOpt = editor.rezIndex.getImageSet(fqImageSetId)
+      val i = obj.wwdObject.i
+      val textureOpt = imageSetOpt.flatMap(imageSet => imageSet.getTexture(i))
 
-          val transform = camera
+      textureOpt.foreach(texture => {
 
-          ctx.setTransform(
-            transform.a,
-            transform.b,
-            transform.c,
-            transform.d,
-            transform.e,
-            transform.f,
-          )
-
-          tiles foreach {
-            case (coord, tile) => {
-              val tileImage = editor.tileImageBank.getTileImage(tile)
-              ctx.drawImage(tileImage, coord.j * 64, coord.i * 64)
-            }
-          }
+        val image = texture.htmlImage
+        val size = Vec2(image.width, image.height)
+        val halfSize = size / 2
 
 
-          objects foreach (obj => {
-            val pos = obj.position
-            val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
+        val center = translate(halfSize * -1)
 
-            val imageSetOpt = editor.rezIndex.getImageSet(fqImageSetId)
-            val i = obj.wwdObject.i
-            val textureOpt = imageSetOpt.flatMap(imageSet => imageSet.getTexture(i))
+        val sx: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Mirror) != 0) -1 else 1
+        val sy: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Invert) != 0) -1 else 1
+        val mirror = scale(Vec2(sx, sy))
 
-            textureOpt.foreach(texture => {
+        val position = translate(obj.position.sample() + texture.offset)
 
-              val image = texture.htmlImage
-              val size = Vec2(image.width, image.height)
-              val halfSize = size / 2
+        val camera = cameraTransform
+        val transform = camera * position * mirror * center
 
+        ctx.setTransform(
+          transform.a,
+          transform.b,
+          transform.c,
+          transform.d,
+          transform.e,
+          transform.f,
+        )
 
-              val center = translate(halfSize * -1)
+        ctx.drawImage(image, 0, 0)
+      })
+    }
 
-              val sx: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Mirror) != 0) -1 else 1
-              val sy: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Invert) != 0) -1 else 1
-              val mirror = scale(Vec2(sx, sy))
+    val objectsDrawFns = objects
+      .sortedBy(obj => obj.z)
+      //        .toList()
+      .fuseMap(obj => {
+        //        console.log("@@@ 2")
 
-              val position = translate(obj.position + texture.offset)
+        obj.position.map(pos => (ctx: CanvasRenderingContext2D, cameraTransform: Transform) => {
+          drawObject(ctx, cameraTransform, obj)
+        })
+        //          Const((ctx: CanvasRenderingContext2D) => {})
+      })
 
-              val transform = camera * position * mirror * center
+    //    val drawFn = cameraTransform.switchMapC(cameraTransform => {
+    //
+    //      println("@@@ 1")
+    //
+    //      def drawTiles(ctx: CanvasRenderingContext2D): Unit = {
+    //        val camera = cameraTransform
+    //
+    //        val transform = camera
+    //
+    //        ctx.setTransform(
+    //          transform.a,
+    //          transform.b,
+    //          transform.c,
+    //          transform.d,
+    //          transform.e,
+    //          transform.f,
+    //        )
+    //
+    //        tiles foreach {
+    //          case (coord, tile) => {
+    //            val tileImage = editor.tileImageBank.getTileImage(tile)
+    //            ctx.drawImage(tileImage, coord.j * 64, coord.i * 64)
+    //          }
+    //        }
+    //      }
+    //
+    //
+    //      val objectsDrawFns = objects
+    //        .sortedBy(obj => obj.z)
+    //        //        .toList()
+    //        .fuseMap(obj => {
+    //          //          console.log("@@@ 2")
+    //
+    //
+    //          obj.position.map(pos => (ctx: CanvasRenderingContext2D) => {
+    //            val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
+    //
+    //            val imageSetOpt = editor.rezIndex.getImageSet(fqImageSetId)
+    //            val i = obj.wwdObject.i
+    //            val textureOpt = imageSetOpt.flatMap(imageSet => imageSet.getTexture(i))
+    //
+    //            textureOpt.foreach(texture => {
+    //
+    //              val image = texture.htmlImage
+    //              val size = Vec2(image.width, image.height)
+    //              val halfSize = size / 2
+    //
+    //
+    //              val center = translate(halfSize * -1)
+    //
+    //              val sx: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Mirror) != 0) -1 else 1
+    //              val sy: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Invert) != 0) -1 else 1
+    //              val mirror = scale(Vec2(sx, sy))
+    //
+    //              val position = translate(obj.position.sample() + texture.offset)
+    //
+    //              val camera = cameraTransform
+    //              val transform = camera * position * mirror * center
+    //
+    //              ctx.setTransform(
+    //                transform.a,
+    //                transform.b,
+    //                transform.c,
+    //                transform.d,
+    //                transform.e,
+    //                transform.f,
+    //              )
+    //
+    //              ctx.drawImage(image, 0, 0)
+    //            })
+    //          })
+    //
+    //          //          Const((ctx: CanvasRenderingContext2D) => {})
+    //        })
+    //
+    //      //      val objectsDrawFns = DynamicList.empty[CanvasRenderingContext2D => Unit]()
+    //
+    //      objectsDrawFns.content.map(drawFns => (ctx: CanvasRenderingContext2D) => {
+    //        //        drawTiles(ctx)
+    //        drawFns.take(500).foreach(drawFn => drawFn(ctx))
+    //      })
+    //    })
 
-              ctx.setTransform(
-                transform.a,
-                transform.b,
-                transform.c,
-                transform.d,
-                transform.e,
-                transform.f,
-              )
+    def drawTiles(ctx: CanvasRenderingContext2D, cameraTransform: Transform): Unit = {
+      val camera = cameraTransform
 
-              ctx.drawImage(image, 0, 0)
-            })
-          })
+      val transform = camera
+
+      ctx.setTransform(
+        transform.a,
+        transform.b,
+        transform.c,
+        transform.d,
+        transform.e,
+        transform.f,
+      )
+
+      tiles foreach {
+        case (coord, tile) => {
+          val tileImage = editor.tileImageBank.getTileImage(tile)
+          ctx.drawImage(tileImage, coord.j * 64, coord.i * 64)
         }
+      }
+    }
+
+    val drawFn_ = Cell.map2(
+      cameraTransform,
+      objectsDrawFns.content,
+      (
+        cameraTransform: Transform,
+        objectsDrawFns: List[(CanvasRenderingContext2D, Transform) => Unit],
+      ) => (ctx: CanvasRenderingContext2D) => {
+        drawTiles(ctx, cameraTransform)
+        objectsDrawFns.foreach(drawFn => drawFn(ctx, cameraTransform))
+      }
     )
 
-    canvasView(drawFn)
+    val theView = canvasView(drawFn_)
+
+    //    theView.onPointerDown.listen(e => {
+    //      val viewPoint = widgetV(theView, e)
+    //      val invertedTransform = cameraTransform.sample().inversed()
+    //      val worldPoint = invertedTransform.transform(viewPoint)
+    //      val obj = editor.findClosestObject(worldPoint)
+    //
+    //      obj.move(Vec2(32, 0))
+    //
+    //      println(obj.wwdObject.id)
+    //    })
+
+    theView
   }
 }

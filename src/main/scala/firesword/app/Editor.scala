@@ -6,6 +6,8 @@ import firesword.app.RezIndex.RezIndex
 import firesword.app.TilesView.TileImageBank
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
+import firesword.frp.DynamicSet
+import firesword.frp.DynamicSet.{DynamicSet, MutDynamicSet}
 import firesword.frp.MutCell.MutCell
 import firesword.scalajsdomext.Fetch.fetchArrayBuffer
 import firesword.wwd.DataStream
@@ -22,6 +24,8 @@ import scala.scalajs.js.typedarray.ArrayBuffer
 
 object Editor {
   case class Vec2(x: Double, y: Double) {
+    def length: Double = Math.sqrt(x * x + y * y)
+
     def *(s: Double): Vec2 =
       Vec2(x * s, y * s)
 
@@ -46,6 +50,10 @@ object Editor {
                 val resourceBank: ResourceBank,
                 val rezIndex: RezIndex,
               ) {
+
+    def findClosestObject(p: Vec2): EdObject =
+      objects.content.sample().minBy(obj => (obj.position.sample() - p).length)
+
     val tileImageBank: TileImageBank = resourceBank.tileImageBank
 
     val imageSetBank = new ImageSetBank()
@@ -65,7 +73,13 @@ object Editor {
         TileCoord(i, j) -> tile
       }
 
-      entries.filter(_._2 > 0).toMap
+      entries
+
+        .filter(_._2 > 0)
+//        .take(100)
+
+
+        .toMap
     }
 
     private val _hoveredTile = new MutCell[TileCoord](TileCoord(5, 8))
@@ -74,13 +88,17 @@ object Editor {
 
     val tiles: DynamicMap[TileCoord, Tile] = _tiles
 
-    val objects: Set[EdObject] = plane.objects.map(wwdObject => {
-      new EdObject(
-        wwdObject = wwdObject,
-        position = Vec2(wwdObject.x, wwdObject.y),
-        imageSetId = DataStream.decoder.decode(wwdObject.imageSet.byteArray),
-      )
-    }).toSet
+    val objects: DynamicSet[EdObject] = DynamicSet.of(
+      plane.objects
+//        .take(500)
+        . map(wwdObject => {
+        new EdObject(
+          wwdObject = wwdObject,
+          initialPosition = Vec2(wwdObject.x, wwdObject.y),
+          imageSetId = DataStream.decoder.decode(wwdObject.imageSet.byteArray),
+        )
+      }).toSet
+    )
 
     val hoveredTile: Cell[TileCoord] = _hoveredTile
 
@@ -98,6 +116,9 @@ object Editor {
     ))
 
     val cameraFocusPoint: Cell[Vec2] = camera.focusPoint
+
+    // FIXME
+    cameraFocusPoint.listen(_ => {})
 
     def hoverTile(coord: TileCoord): Unit = {
       _hoveredTile.set(coord)

@@ -37,6 +37,12 @@ case class Transform(
     )
   }
 
+  def transform(v: Vec2): Vec2 =
+    Vec2(
+      x = a * v.x + c * v.y + e,
+      y = b * v.x + d * v.y + f,
+    )
+
   //  def scaled(s: Vec2): Transform =
   //    Transform.scale(s) * this
   //

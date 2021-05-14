@@ -4,6 +4,8 @@ import firesword.frp.Cell.Cell
 import firesword.frp.Frp.Unsubscribe
 import firesword.frp.SimpleCell.SimpleCell
 
+
+
 object SwitchC {
   class CellSwitchC[A](source: Cell[Cell[A]]) extends SimpleCell[A] {
     private var _unsubscribeOuter: Unsubscribe = _
@@ -17,6 +19,7 @@ object SwitchC {
 
       def reAddInnerListener(inner: Cell[A]): Unit = {
         _unsubscribeInner()
+        _unsubscribeInner = null
         addInnerListener(inner)
       }
 

@@ -34,6 +34,9 @@ object Dom {
 
     lazy val onPointerMove: EventStream[PointerEvent] =
       elementEventStream[PointerEvent](node, "pointermove")
+
+    lazy val onMouseMove: EventStream[MouseEvent] =
+      elementEventStream[MouseEvent](node, "mousemove")
   }
 
   def render(target: dom.Node, widget: Widget): Unit = {

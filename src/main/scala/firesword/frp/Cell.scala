@@ -2,8 +2,11 @@ package firesword.frp
 
 import firesword.frp.EventStream.EventStream
 import firesword.frp.Frp.{Unsubscribe, action, behavior}
+import firesword.frp.cell.CellCached.CellCached
 import firesword.frp.cell.CellFromFuture.CellFromFuture
+import firesword.frp.cell.CellSequenceList.CellSequenceList
 import firesword.frp.cell.Follow.CellFollowFirst
+import firesword.frp.cell.Map2.CellMap2
 import firesword.frp.cell.SwitchC.CellSwitchC
 
 import scala.concurrent.Future
@@ -18,7 +21,7 @@ object Cell {
 
     private[frp] def addListener(h: A => Unit): Unsubscribe
 
-    private[frp] def removeListener(h: A => Unit): Unit
+    protected[this] def removeListener(h: A => Unit): Unit
 
 
     @action
@@ -26,23 +29,22 @@ object Cell {
 
     @behavior
     def sample(): A
+
+    def cached(): Cell[A] =
+      new CellCached[A](this)
   }
 
   def map2[A, B, C](ca: Cell[A], cb: Cell[B], f: (A, B) => C): Cell[C] =
-    ca.switchMapC(a =>
-      cb.map(b =>
-        f(a, b),
-      ),
-    )
+    new CellMap2(ca, cb, f).cached()
 
   def followFirst[A](a: A, f: A => EventStream[A]): Cell[A] =
     new CellFollowFirst[A](a, f)
 
   def switchC[A](cca: Cell[Cell[A]]): Cell[A] =
-    new CellSwitchC(cca)
+    new CellSwitchC(cca).cached()
 
-  def switchHoldC[A](initialCell: Cell[A], steps: EventStream[Cell[A]]): Cell[A] =
-    switchC(steps.hold(initialCell))
+//  def switchHoldC[A](initialCell: Cell[A], steps: EventStream[Cell[A]]): Cell[A] =
+//    switchC(steps.hold(initialCell))
 
   def fromFuture[A, B](
                         future: Future[A],
@@ -56,4 +58,10 @@ object Cell {
       successfullyCompleted = successfullyCompleted,
       failed = failed,
     )
+
+  def sequence[A](lca: List[Cell[A]]): Cell[List[A]] =
+    new CellSequenceList[A](lca).cached()
+
+  def traverse[A, B](la: List[A], f: A => Cell[B]): Cell[List[B]] =
+    sequence(la.map(f))
 }

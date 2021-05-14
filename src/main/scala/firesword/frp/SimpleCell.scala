@@ -26,8 +26,15 @@ object SimpleCell {
       }
     }
 
-    private[frp] def removeListener(h: A => Unit): Unit = {
-      listeners.remove(h)
+    protected[this] def removeListener(h: A => Unit): Unit = {
+      val wasThere = listeners.remove(h)
+      if (!wasThere) {
+        throw new IllegalStateException("Attempted to remove non-existing listener")
+      }
+
+      if (listeners.isEmpty) {
+        onStop()
+      }
     }
 
     protected[this] def notifyListeners(a: A): Unit = {
