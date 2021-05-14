@@ -6,6 +6,7 @@ import scala.language.implicitConversions
 
 object EdObject {
   class EdObject(
-                  val position: Vec2
+                  val position: Vec2,
+                  val imageSetId: String,
                 )
 }

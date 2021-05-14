@@ -181,7 +181,6 @@ object TilesView {
   def tilesView(editor: Editor): Widget = {
     val tiles = editor.tiles.content.sample()
     val objects = editor.objects
-    val objectImage = editor.resourceBank.objectPlaceholderImage
 
     val drawFn = Cell.map2(
       editor.cameraFocusPoint,
@@ -200,6 +199,7 @@ object TilesView {
 
           objects foreach (obj => {
             val pos = obj.position
+            val objectImage = editor.imageSetBank.getImage(obj.imageSetId, -1)
             ctx.drawImage(objectImage, pos.x, pos.y)
           })
         }

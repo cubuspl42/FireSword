@@ -6,6 +6,7 @@ import firesword.app.TilesView.TileImageBank
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
 import firesword.frp.MutCell.MutCell
+import firesword.wwd.DataStream
 import firesword.wwd.Wwd.readWorld
 import org.scalajs.dom._
 import org.scalajs.dom.experimental.Fetch.fetch
@@ -42,13 +43,13 @@ object Editor {
                 worldBuffer: ArrayBuffer,
                 val resourceBank: ResourceBank,
               ) {
+    val tileImageBank: TileImageBank = resourceBank.tileImageBank
 
-    val tileImageBank = resourceBank.tileImageBank
+    val imageSetBank = new ImageSetBank()
 
     private val world = readWorld(worldBuffer)
 
-    private       val plane = world.planes(1)
-
+    private val plane = world.planes(1)
 
     private def loadTiles(): Map[TileCoord, Int] = {
 
@@ -71,7 +72,10 @@ object Editor {
     val tiles: DynamicMap[TileCoord, Tile] = _tiles
 
     val objects: Set[EdObject] = plane.objects.map(wObject => {
-      new EdObject(Vec2(wObject.x, wObject.y))
+      new EdObject(
+        position = Vec2(wObject.x, wObject.y),
+        imageSetId = DataStream.decoder.decode(wObject.imageSet.byteArray),
+      )
     }).toSet
 
     val hoveredTile: Cell[TileCoord] = _hoveredTile
