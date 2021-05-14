@@ -199,8 +199,18 @@ object TilesView {
 
           objects foreach (obj => {
             val pos = obj.position
-            val objectImage = editor.imageSetBank.getImage(obj.imageSetId, -1)
-            ctx.drawImage(objectImage, pos.x, pos.y)
+            val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
+
+            val imageSetOpt = editor.rezIndex.getImageSet(fqImageSetId)
+            val textureOpt = imageSetOpt.flatMap(imageSet => imageSet.getTexture(-1))
+
+            textureOpt.foreach(texture => {
+              val image = texture.htmlImage
+              val size = Vec2(image.width, image.height)
+              val pos = obj.position - (size / 2) + texture.offset
+
+              ctx.drawImage(image, pos.x, pos.y)
+            })
           })
         }
     )

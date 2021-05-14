@@ -2,12 +2,14 @@ package firesword.app
 
 import firesword.app.Camera.{Camera, FreeCamera}
 import firesword.app.EdObject.EdObject
+import firesword.app.RezIndex.RezIndex
 import firesword.app.TilesView.TileImageBank
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
 import firesword.frp.MutCell.MutCell
+import firesword.scalajsdomext.Fetch.fetchArrayBuffer
 import firesword.wwd.DataStream
-import firesword.wwd.Wwd.readWorld
+import firesword.wwd.Wwd.{readWorld, rezFileLength}
 import org.scalajs.dom._
 import org.scalajs.dom.experimental.Fetch.fetch
 import org.scalajs.dom.experimental.Response
@@ -42,6 +44,7 @@ object Editor {
   class Editor(
                 worldBuffer: ArrayBuffer,
                 val resourceBank: ResourceBank,
+                val rezIndex: RezIndex,
               ) {
     val tileImageBank: TileImageBank = resourceBank.tileImageBank
 
@@ -134,20 +137,19 @@ object Editor {
   }
 
   private def fetchWorldBuffer(): Future[ArrayBuffer] =
-    for (
-      response <- fetch("assets/worlds/WORLD.WWD").toFuture
-        .map(failOnUnsuccessfulResponse);
-      worldBuffer <- response.arrayBuffer().toFuture
-    ) yield worldBuffer
+    fetchArrayBuffer("assets/worlds/WORLD.WWD")
 
   def load(): Future[Editor] = {
     for (
       worldBuffer <- fetchWorldBuffer();
-      resourceBank <- ResourceBank.load()
+      resourceBank <- ResourceBank.load();
+      rezIndex <- RezIndex.load()
     ) yield {
+      println("new Editor")
       new Editor(
         worldBuffer = worldBuffer,
         resourceBank = resourceBank,
+        rezIndex = rezIndex,
       )
     }
   }
