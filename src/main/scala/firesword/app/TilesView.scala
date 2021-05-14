@@ -7,6 +7,7 @@ import firesword.dom.Dom.Widget
 import firesword.frp.Cell
 import firesword.frp.Cell.Cell
 import firesword.scalajsdomext.HTMLImageElementExt.implicitHTMLImageElementExt
+import firesword.wwd.Wwd.DrawFlags
 import org.scalajs.dom._
 import org.scalajs.dom.html.Canvas
 import org.scalajs.dom.raw.HTMLImageElement
@@ -187,8 +188,23 @@ object TilesView {
       editor.cameraZoom,
       (fp: Vec2, z: Double) =>
         (ctx: CanvasRenderingContext2D) => {
-          ctx.scale(z, z)
-          ctx.translate(-fp.x, -fp.y)
+          import Transform._
+
+          val canvas = ctx.canvas
+          val canvasSize = Vec2(canvas.width, canvas.height)
+
+          val camera = translate(canvasSize / 2) * scale(z) * translate(fp * -1)
+
+          val transform = camera
+
+          ctx.setTransform(
+            transform.a,
+            transform.b,
+            transform.c,
+            transform.d,
+            transform.e,
+            transform.f,
+          )
 
           tiles foreach {
             case (coord, tile) => {
@@ -197,19 +213,42 @@ object TilesView {
             }
           }
 
+
           objects foreach (obj => {
             val pos = obj.position
             val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
 
             val imageSetOpt = editor.rezIndex.getImageSet(fqImageSetId)
-            val textureOpt = imageSetOpt.flatMap(imageSet => imageSet.getTexture(-1))
+            val i = obj.wwdObject.i
+            val textureOpt = imageSetOpt.flatMap(imageSet => imageSet.getTexture(i))
 
             textureOpt.foreach(texture => {
+
               val image = texture.htmlImage
               val size = Vec2(image.width, image.height)
-              val pos = obj.position - (size / 2) + texture.offset
+              val halfSize = size / 2
 
-              ctx.drawImage(image, pos.x, pos.y)
+
+              val center = translate(halfSize * -1)
+
+              val sx: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Mirror) != 0) -1 else 1
+              val sy: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Invert) != 0) -1 else 1
+              val mirror = scale(Vec2(sx, sy))
+
+              val position = translate(obj.position + texture.offset)
+
+              val transform = camera * position * mirror * center
+
+              ctx.setTransform(
+                transform.a,
+                transform.b,
+                transform.c,
+                transform.d,
+                transform.e,
+                transform.f,
+              )
+
+              ctx.drawImage(image, 0, 0)
             })
           })
         }

@@ -74,10 +74,11 @@ object Editor {
 
     val tiles: DynamicMap[TileCoord, Tile] = _tiles
 
-    val objects: Set[EdObject] = plane.objects.map(wObject => {
+    val objects: Set[EdObject] = plane.objects.map(wwdObject => {
       new EdObject(
-        position = Vec2(wObject.x, wObject.y),
-        imageSetId = DataStream.decoder.decode(wObject.imageSet.byteArray),
+        wwdObject = wwdObject,
+        position = Vec2(wwdObject.x, wwdObject.y),
+        imageSetId = DataStream.decoder.decode(wwdObject.imageSet.byteArray),
       )
     }).toSet
 
