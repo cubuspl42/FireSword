@@ -13,6 +13,7 @@ import firesword.frp.MutCell.MutCell
 import firesword.scalajsdomext.Fetch.fetchArrayBuffer
 import firesword.wwd.DataStream
 import firesword.wwd.Wwd.readWorld
+import org.scalajs.dom.{console, window}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -85,10 +86,17 @@ object Editor {
 
     private val _initialSelectedObject = objects.content.sample().filter(o => o.wwdObject.id == 3024).head
 
+
+    val anotherObject = objects.content.sample().filter(o => o.wwdObject.id == 1171).head
+
     private val _selectedObject = new MutCell[Option[EdObject]](Some(_initialSelectedObject))
 
-    def selectClosestObject(wp: Vec2d): Unit = {
-      _selectedObject.set(Some(findClosestObject(wp)))
+    def selectObject(edObject: EdObject): Unit = {
+      val t1 = window.performance.now()
+      _selectedObject.set(Some(edObject))
+      val t2 = window.performance.now()
+
+      console.log(s"t2 - t1 = ${t2 - t1}")
     }
 
     def selectedObject: Cell[Option[EdObject]] = _selectedObject

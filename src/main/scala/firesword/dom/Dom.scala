@@ -1,5 +1,6 @@
 package firesword.dom
 
+import firesword.app.Geometry.Vec2d
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicList
 import firesword.frp.DynamicList.DynamicList
@@ -9,6 +10,7 @@ import firesword.frp.SourceEventStream.SourceEventStream
 import org.scalajs.dom
 import org.scalajs.dom._
 import org.scalajs.dom.html.Element
+import org.scalajs.dom.raw.HTMLElement
 import scalacss.StyleA
 
 object Dom {
@@ -22,11 +24,33 @@ object Dom {
       () => element.removeEventListener(eventType, listener_)
     })
 
+  class MouseDragGesture(
+                          val clientPos: Cell[Vec2d],
+                          val onStop: EventStream[Unit],
+                        )
+
+  object MouseDragGesture {
+    def start(element: Widget, event: MouseEvent): MouseDragGesture = {
+      val clientPos = element.onMouseMove.hold(event)
+        .map(e => Vec2d(e.clientX, e.clientY))
+      val onStop = element.onPointerUp.map(_ => ())
+
+      new MouseDragGesture(
+        clientPos = clientPos,
+        onStop = onStop,
+      )
+    }
+  }
+
+
   class Widget(val node: Element) {
 
     lazy val onMouseDown: EventStream[MouseEvent] =
       elementEventStream[MouseEvent](node, "mousedown")
 
+
+    lazy val onMouseDrag: EventStream[MouseDragGesture] =
+      ???
 
     lazy val onPointerDown: EventStream[PointerEvent] =
       elementEventStream[PointerEvent](node, "pointerdown")

@@ -7,8 +7,9 @@ import firesword.app.Editor.Editor
 import firesword.app.Geometry.Vec2d
 import firesword.app.utils.CanvasRenderingContext2DUtils.strokeRoundedRect
 import firesword.dom.Dom.Tag.div
-import firesword.dom.Dom.Widget
+import firesword.dom.Dom.{MouseDragGesture, Widget}
 import firesword.frp.Cell
+import firesword.frp.Frp.Const
 import firesword.wwd.Wwd.DrawFlags
 import org.scalajs.dom._
 
@@ -54,7 +55,7 @@ object WorldView {
 
     tilesViewDiv
   }
-  
+
   def worldView(editor: Editor): Widget = {
     import Transform._
 
@@ -72,6 +73,8 @@ object WorldView {
         scale(z) * translate(fp * -1)
       },
     );
+
+    val inversedCameraTransform = cameraTransform.map(_.inversed())
 
     def drawObject(
                     ctx: CanvasRenderingContext2D,
@@ -186,13 +189,40 @@ object WorldView {
     theView.onMouseDown.listen(e => {
       if (e.button == 0) {
         val viewPoint = widgetV(theView, e)
-        val invertedTransform = cameraTransform.sample().inversed()
-        val worldPoint = invertedTransform.transform(viewPoint)
-        val obj = editor.findClosestObject(worldPoint)
+        val invertedTransform = inversedCameraTransform.sample()
+        val initialWorldPoint = invertedTransform.transform(viewPoint)
+        val obj = editor.findClosestObject(initialWorldPoint)
 
-        editor.selectClosestObject(worldPoint)
+        val isSelected = editor.selectedObject.sample().contains(obj)
+
+        if (isSelected) {
+          val gesture = MouseDragGesture.start(theView, e)
+
+          val targetWorldPoint = Cell.map2(
+            inversedCameraTransform,
+            gesture.clientPos,
+            (
+              transform: Transform,
+              clientPos: Vec2d,
+            ) => transform.transform(clientPos)
+          )
+
+          val delta = targetWorldPoint.map(twp => {
+            twp - initialWorldPoint
+          })
+
+          obj.move(delta = delta, commit = gesture.onStop)
+        } else {
+          editor.selectObject(obj)
+        }
+
 
         println(obj.wwdObject.id)
+      }
+
+      if (e.button == 1) {
+
+        editor.selectObject(edObject = editor.anotherObject)
       }
     })
 
