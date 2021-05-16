@@ -3,7 +3,7 @@ package firesword.app
 import firesword.app.Camera.FreeCamera
 import firesword.app.Editor.Editor
 import firesword.app.Geometry.Vec2d
-import firesword.app.TilesView.tilesViewOuter
+import firesword.app.WorldView.worldViewOuter
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
 import firesword.frp.Frp.implicitConstSome
@@ -55,7 +55,7 @@ object EditorView {
     val theDiv = div(
       styleClass = MyStyles.editorView,
       children = List(
-        tilesViewOuter(editor),
+        worldViewOuter(editor),
       ),
     )
 

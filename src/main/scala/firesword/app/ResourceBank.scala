@@ -1,7 +1,7 @@
 package firesword.app
 
-import firesword.app.TilesView.TileImageBank
-import firesword.app.TilesView.TileImageBank.loadImage
+import firesword.app.TileImageBank.TileImageBank
+import firesword.app.TileImageBank.TileImageBank.loadImage
 import org.scalajs.dom.raw.HTMLImageElement
 
 import scala.concurrent.ExecutionContext.Implicits.global

@@ -4,18 +4,15 @@ import firesword.app.Camera.{Camera, FreeCamera}
 import firesword.app.EdObject.EdObject
 import firesword.app.Geometry.Vec2d
 import firesword.app.RezIndex.RezIndex
-import firesword.app.TilesView.TileImageBank
+import firesword.app.TileImageBank.TileImageBank
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
 import firesword.frp.DynamicSet
-import firesword.frp.DynamicSet.{DynamicSet, MutDynamicSet}
+import firesword.frp.DynamicSet.DynamicSet
 import firesword.frp.MutCell.MutCell
 import firesword.scalajsdomext.Fetch.fetchArrayBuffer
 import firesword.wwd.DataStream
-import firesword.wwd.Wwd.{readWorld, rezFileLength}
-import org.scalajs.dom._
-import org.scalajs.dom.experimental.Fetch.fetch
-import org.scalajs.dom.experimental.Response
+import firesword.wwd.Wwd.readWorld
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -63,7 +60,7 @@ object Editor {
       entries
 
         .filter(_._2 > 0)
-//        .take(100)
+        //        .take(100)
 
 
         .toMap
@@ -75,14 +72,14 @@ object Editor {
 
     val objects: DynamicSet[EdObject] = DynamicSet.of(
       plane.objects
-//        .take(500)
-        . map(wwdObject => {
-        new EdObject(
-          wwdObject = wwdObject,
-          initialPosition = Vec2d(wwdObject.x, wwdObject.y),
-          imageSetId = DataStream.decoder.decode(wwdObject.imageSet.byteArray),
-        )
-      }).toSet
+        //        .take(500)
+        .map(wwdObject => {
+          new EdObject(
+            wwdObject = wwdObject,
+            initialPosition = Vec2d(wwdObject.x, wwdObject.y),
+            imageSetId = DataStream.decoder.decode(wwdObject.imageSet.byteArray),
+          )
+        }).toSet
     )
 
 
@@ -90,7 +87,7 @@ object Editor {
 
     private val _selectedObject = new MutCell[Option[EdObject]](Some(_initialSelectedObject))
 
-    def selectClosestObject(wp: Vec2d): Unit ={
+    def selectClosestObject(wp: Vec2d): Unit = {
       _selectedObject.set(Some(findClosestObject(wp)))
     }
 
