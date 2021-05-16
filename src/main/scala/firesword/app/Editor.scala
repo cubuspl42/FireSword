@@ -2,6 +2,7 @@ package firesword.app
 
 import firesword.app.Camera.{Camera, FreeCamera}
 import firesword.app.EdObject.EdObject
+import firesword.app.Geometry.Vec2d
 import firesword.app.RezIndex.RezIndex
 import firesword.app.TilesView.TileImageBank
 import firesword.frp.Cell.Cell
@@ -23,21 +24,7 @@ import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 
 object Editor {
-  case class Vec2(x: Double, y: Double) {
-    def length: Double = Math.sqrt(x * x + y * y)
 
-    def *(s: Double): Vec2 =
-      Vec2(x * s, y * s)
-
-    def /(s: Double): Vec2 =
-      Vec2(x / s, y / s)
-
-    def +(that: Vec2): Vec2 =
-      Vec2(x + that.x, y + that.y)
-
-    def -(that: Vec2): Vec2 =
-      Vec2(x - that.x, y - that.y)
-  }
 
   private val tileSize = 64
 
@@ -51,7 +38,7 @@ object Editor {
                 val rezIndex: RezIndex,
               ) {
 
-    def findClosestObject(p: Vec2): EdObject =
+    def findClosestObject(p: Vec2d): EdObject =
       objects.content.sample().minBy(obj => (obj.position.sample() - p).length)
 
     val tileImageBank: TileImageBank = resourceBank.tileImageBank
@@ -82,8 +69,6 @@ object Editor {
         .toMap
     }
 
-    private val _hoveredTile = new MutCell[TileCoord](TileCoord(5, 8))
-
     private val _tiles = new MutDynamicMap(loadTiles())
 
     val tiles: DynamicMap[TileCoord, Tile] = _tiles
@@ -94,13 +79,11 @@ object Editor {
         . map(wwdObject => {
         new EdObject(
           wwdObject = wwdObject,
-          initialPosition = Vec2(wwdObject.x, wwdObject.y),
+          initialPosition = Vec2d(wwdObject.x, wwdObject.y),
           imageSetId = DataStream.decoder.decode(wwdObject.imageSet.byteArray),
         )
       }).toSet
     )
-
-    val hoveredTile: Cell[TileCoord] = _hoveredTile
 
     val _zoom = new MutCell(1.0)
 
@@ -111,29 +94,14 @@ object Editor {
     }
 
     val camera = new Camera(FreeCamera(
-      initialFocusPoint = Vec2(world.startX, world.startY),
+      initialFocusPoint = Vec2d(world.startX, world.startY),
       zoom = cameraZoom,
     ))
 
-    val cameraFocusPoint: Cell[Vec2] = camera.focusPoint
+    val cameraFocusPoint: Cell[Vec2d] = camera.focusPoint
 
     // FIXME
     cameraFocusPoint.listen(_ => {})
-
-    def hoverTile(coord: TileCoord): Unit = {
-      _hoveredTile.set(coord)
-    }
-
-    def hoverNextTile(): Unit = {
-      val oldCoord = hoveredTile.sample()
-      hoverTile(TileCoord(oldCoord.i, oldCoord.j + 1))
-    }
-
-    def insertTile(coord: TileCoord): Unit = {
-      val tileId = 100
-      console.log(s"Inserting $tileId @ $coord")
-      _tiles.put(coord, tileId)
-    }
 
     def getTileCoordAtPoint(x: Double, y: Double): TileCoord =
       TileCoord(
@@ -148,14 +116,6 @@ object Editor {
       p.success(())
     }
     p.future
-  }
-
-  def failOnUnsuccessfulResponse(response: Response): Response = {
-    if (response.ok) {
-      response
-    } else {
-      throw new Exception("Fetch error")
-    }
   }
 
   private def fetchWorldBuffer(): Future[ArrayBuffer] =

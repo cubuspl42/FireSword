@@ -1,6 +1,5 @@
 package firesword.scalajsdomext
 
-import firesword.app.Editor.failOnUnsuccessfulResponse
 import org.scalajs.dom.experimental.Fetch.fetch
 import org.scalajs.dom.experimental.Response
 

@@ -1,15 +1,13 @@
 package firesword.app
 
-import firesword.app
 import firesword.app.Camera.FreeCamera
 import firesword.app.EdObject.EdObject
-import firesword.app.Editor.{Editor, Vec2}
-import firesword.app.Transform.{scale, translate}
+import firesword.app.Editor.Editor
+import firesword.app.Geometry.Vec2d
 import firesword.dom.Dom.Tag.div
 import firesword.dom.Dom.Widget
-import firesword.frp.{Cell, DynamicList}
+import firesword.frp.Cell
 import firesword.frp.Cell.Cell
-import firesword.frp.Frp.Const
 import firesword.scalajsdomext.HTMLImageElementExt.implicitHTMLImageElementExt
 import firesword.wwd.Wwd.DrawFlags
 import org.scalajs.dom._
@@ -152,7 +150,7 @@ object TilesView {
     new Widget(canvas)
   }
 
-  def widgetV(widget: Widget, e: MouseEvent): Vec2 = {
+  def widgetV(widget: Widget, e: MouseEvent): Vec2d = {
     //    val rect = widget.node.getBoundingClientRect()
     //    val x = e.clientX - rect.left
     //    val y = e.clientY - rect.top
@@ -160,7 +158,7 @@ object TilesView {
     val x = e.clientX
     val y = e.clientY
 
-    Vec2(x, y)
+    Vec2d(x, y)
   }
 
   def tilesViewOuter(editor: Editor): Widget = {
@@ -172,7 +170,7 @@ object TilesView {
       children = List(tilesView(editor))
     )
 
-    def calculateTargetPoint(e: MouseEvent): Vec2 = {
+    def calculateTargetPoint(e: MouseEvent): Vec2d = {
       widgetV(tilesViewDiv, e)
     }
 
@@ -208,7 +206,7 @@ object TilesView {
     val cameraTransform = Cell.map2(
       editor.cameraFocusPoint,
       editor.cameraZoom,
-      (fp: Vec2, z: Double) => {
+      (fp: Vec2d, z: Double) => {
         //  translate(canvasSize / 2) *
         scale(z) * translate(fp * -1)
       },
@@ -224,7 +222,7 @@ object TilesView {
       textureOpt.foreach(texture => {
 
         val image = texture.htmlImage
-        val size = Vec2(image.width, image.height)
+        val size = Vec2d(image.width, image.height)
         val halfSize = size / 2
 
 
@@ -232,7 +230,7 @@ object TilesView {
 
         val sx: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Mirror) != 0) -1 else 1
         val sy: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Invert) != 0) -1 else 1
-        val mirror = scale(Vec2(sx, sy))
+        val mirror = scale(Vec2d(sx, sy))
 
         val position = translate(obj.position.sample() + texture.offset)
 
@@ -308,7 +306,7 @@ object TilesView {
     //            textureOpt.foreach(texture => {
     //
     //              val image = texture.htmlImage
-    //              val size = Vec2(image.width, image.height)
+    //              val size = Vec2d(image.width, image.height)
     //              val halfSize = size / 2
     //
     //
@@ -316,7 +314,7 @@ object TilesView {
     //
     //              val sx: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Mirror) != 0) -1 else 1
     //              val sy: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Invert) != 0) -1 else 1
-    //              val mirror = scale(Vec2(sx, sy))
+    //              val mirror = scale(Vec2d(sx, sy))
     //
     //              val position = translate(obj.position.sample() + texture.offset)
     //
@@ -365,7 +363,7 @@ object TilesView {
       tiles foreach {
         case (coord, tile) => {
           val tileImage = editor.tileImageBank.getTileImage(tile)
-          val p = Vec2(coord.j * 64, coord.i * 64)
+          val p = Vec2d(coord.j * 64, coord.i * 64)
           val cp = cameraTransform.transform(p)
 
           if (cp.x >= -64 && cp.x < canvas.width && cp.y >= -64 && cp.y < canvas.height) {
@@ -395,7 +393,7 @@ object TilesView {
           val worldPoint = invertedTransform.transform(viewPoint)
           val obj = editor.findClosestObject(worldPoint)
 
-          obj.move(Vec2(32, 0))
+          obj.move(Vec2d(32, 0))
 
           println(obj.wwdObject.id)
         })

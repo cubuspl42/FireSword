@@ -1,15 +1,13 @@
 package firesword.app
 
-import firesword.app.Editor.Vec2
+import firesword.app.Geometry.Vec2d
 import firesword.app.MapExt.implicitMapOpsExt
 import firesword.app.TilesView.TileImageBank.loadImage
-import firesword.scalajsdomext.Fetch.{fetchArrayBuffer, fetchJson}
+import firesword.scalajsdomext.Fetch.fetchJson
 import org.scalajs.dom.raw.HTMLImageElement
 
-import scala.collection.MapOps
-import scala.concurrent.Future
-import scala.scalajs.js.JSON
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.language.implicitConversions
 import scala.scalajs.js
 
@@ -72,7 +70,7 @@ object RezIndex {
 
   class RezTexture(
                     val htmlImage: HTMLImageElement,
-                    val offset: Vec2,
+                    val offset: Vec2d,
                   )
 
 
@@ -85,7 +83,7 @@ object RezIndex {
       textures <- imageSetJson.sprites.toMap.traverse({
         case (pidFilename: String, spriteMetadata: Json.SpriteMetadata) => {
           val offsetArray = spriteMetadata.offset
-          val offset = new Vec2(offsetArray(0), offsetArray(1))
+          val offset = new Vec2d(offsetArray(0), offsetArray(1))
 
           val pidPath = spriteMetadata.path
           val pngPath = pidPath.replaceFirst(".PID", ".png")

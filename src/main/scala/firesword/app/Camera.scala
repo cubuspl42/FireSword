@@ -1,6 +1,6 @@
 package firesword.app
 
-import firesword.app.Editor.Vec2
+import firesword.app.Geometry.Vec2d
 import firesword.frp.Cell
 import firesword.frp.Cell.Cell
 import firesword.frp.EventStream.EventStream
@@ -14,7 +14,7 @@ object Camera {
     val state: Cell[CameraState] =
       Cell.followFirst[CameraState](initialState, _.nextState)
 
-    val focusPoint: Cell[Vec2] =
+    val focusPoint: Cell[Vec2d] =
       state.switchMapC(_.focusPoint)
   }
 
@@ -22,36 +22,36 @@ object Camera {
     // Equation:
     // targetPoint = (worldPoint - focusPoint) * zoom
 
-    def solveForTargetPoint(worldPoint: Vec2, focusPoint: Vec2, zoom: Double): Vec2 =
+    def solveForTargetPoint(worldPoint: Vec2d, focusPoint: Vec2d, zoom: Double): Vec2d =
       (worldPoint - focusPoint) * zoom
 
-    def solveForFocusPoint(worldPoint: Vec2, targetPoint: Vec2, zoom: Double): Vec2 =
+    def solveForFocusPoint(worldPoint: Vec2d, targetPoint: Vec2d, zoom: Double): Vec2d =
       worldPoint - targetPoint / zoom
 
-    def solveForWorldPoint(targetPoint: Vec2, focusPoint: Vec2, zoom: Double): Vec2 =
+    def solveForWorldPoint(targetPoint: Vec2d, focusPoint: Vec2d, zoom: Double): Vec2d =
       targetPoint / zoom + focusPoint
   }
 
   abstract class CameraState {
-    val focusPoint: Cell[Vec2]
+    val focusPoint: Cell[Vec2d]
 
     val nextState: EventStream[CameraState]
   }
 
-  case class FreeCamera(initialFocusPoint: Vec2, zoom: Cell[Double]) extends CameraState {
+  case class FreeCamera(initialFocusPoint: Vec2d, zoom: Cell[Double]) extends CameraState {
     private val _focusPoint = new MutCell(initialFocusPoint)
 
-    override val focusPoint: Cell[Vec2] = _focusPoint
+    override val focusPoint: Cell[Vec2d] = _focusPoint
 
     private val _nextState = new EventStreamSink[CameraState]()
 
     override val nextState: EventStream[CameraState] = _nextState
 
-    def moveCamera(delta: Vec2): Unit = {
+    def moveCamera(delta: Vec2d): Unit = {
       _focusPoint.update(_ + delta)
     }
 
-    def dragCamera(targetPoint: Cell[Vec2], stop: EventStream[Unit]): Unit = {
+    def dragCamera(targetPoint: Cell[Vec2d], stop: EventStream[Unit]): Unit = {
       val anchorPoint = CameraEquation.solveForWorldPoint(
         targetPoint = targetPoint.sample(),
         focusPoint = focusPoint.sample(),
@@ -68,15 +68,15 @@ object Camera {
   }
 
   case class DraggedCamera(
-                            targetPoint: Cell[Vec2],
-                            anchorPoint: Vec2,
+                            targetPoint: Cell[Vec2d],
+                            anchorPoint: Vec2d,
                             stop: EventStream[Unit],
                             zoom: Cell[Double]
                           ) extends CameraState {
-    override val focusPoint: Cell[Vec2] = Cell.map2(
+    override val focusPoint: Cell[Vec2d] = Cell.map2(
       targetPoint,
       zoom,
-      (tp: Vec2, z: Double) =>
+      (tp: Vec2d, z: Double) =>
         CameraEquation.solveForFocusPoint(
           worldPoint = anchorPoint,
           targetPoint = tp,

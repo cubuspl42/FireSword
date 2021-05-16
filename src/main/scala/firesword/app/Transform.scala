@@ -1,6 +1,6 @@
 package firesword.app
 
-import firesword.app.Editor.Vec2
+import firesword.app.Geometry.Vec2d
 
 case class Transform(
                       a: Double,
@@ -37,16 +37,16 @@ case class Transform(
     )
   }
 
-  def transform(v: Vec2): Vec2 =
-    Vec2(
+  def transform(v: Vec2d): Vec2d =
+    Vec2d(
       x = a * v.x + c * v.y + e,
       y = b * v.x + d * v.y + f,
     )
 
-  //  def scaled(s: Vec2): Transform =
+  //  def scaled(s: Vec2d): Transform =
   //    Transform.scale(s) * this
   //
-  //  def scaledAround(s: Vec2, c: Vec2): Transform =
+  //  def scaledAround(s: Vec2d, c: Vec2d): Transform =
   //    Transform.scale(s) * this
 }
 
@@ -61,7 +61,7 @@ object Transform {
   )
 
 
-  def scale(s: Vec2): Transform = Transform(
+  def scale(s: Vec2d): Transform = Transform(
     a = s.x,
     c = 0,
     e = 0,
@@ -71,17 +71,17 @@ object Transform {
   )
 
 
-  def scale(s: Double): Transform = scale(Vec2(s, s))
+  def scale(s: Double): Transform = scale(Vec2d(s, s))
 
-  def scaleAround(s: Vec2, c: Vec2): Transform = {
+  def scaleAround(s: Vec2d, c: Vec2d): Transform = {
     val st = scale(s)
     translate(c) * st * translate(c * -1)
   }
 
-  def scaleAround(s: Double, c: Vec2): Transform =
-    scaleAround(Vec2(s, s), c)
+  def scaleAround(s: Double, c: Vec2d): Transform =
+    scaleAround(Vec2d(s, s), c)
 
-  def translate(t: Vec2): Transform = Transform(
+  def translate(t: Vec2d): Transform = Transform(
     a = 1,
     c = 0,
     e = t.x,

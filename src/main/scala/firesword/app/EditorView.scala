@@ -1,7 +1,8 @@
 package firesword.app
 
 import firesword.app.Camera.FreeCamera
-import firesword.app.Editor.{Editor, Vec2}
+import firesword.app.Editor.Editor
+import firesword.app.Geometry.Vec2d
 import firesword.app.TilesView.tilesViewOuter
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
@@ -21,11 +22,11 @@ object EditorView {
       {
         val d = 32
 
-        val deltaV: Option[Vec2] = e.key match {
-          case KeyValue.ArrowLeft => Vec2(-d, 0)
-          case KeyValue.ArrowUp => Vec2(0, -d)
-          case KeyValue.ArrowRight => Vec2(d, 0)
-          case KeyValue.ArrowDown => Vec2(0, d)
+        val deltaV: Option[Vec2d] = e.key match {
+          case KeyValue.ArrowLeft => Vec2d(-d, 0)
+          case KeyValue.ArrowUp => Vec2d(0, -d)
+          case KeyValue.ArrowRight => Vec2d(d, 0)
+          case KeyValue.ArrowDown => Vec2d(0, d)
           case _ => None
         }
 
@@ -54,7 +55,6 @@ object EditorView {
     val theDiv = div(
       styleClass = MyStyles.editorView,
       children = List(
-        span(editor.hoveredTile.map(_.toString)),
         tilesViewOuter(editor),
       ),
     )
