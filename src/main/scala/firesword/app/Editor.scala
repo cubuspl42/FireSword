@@ -85,6 +85,17 @@ object Editor {
       }).toSet
     )
 
+
+    private val _initialSelectedObject = objects.content.sample().filter(o => o.wwdObject.id == 3024).head
+
+    private val _selectedObject = new MutCell[Option[EdObject]](Some(_initialSelectedObject))
+
+    def selectClosestObject(wp: Vec2d): Unit ={
+      _selectedObject.set(Some(findClosestObject(wp)))
+    }
+
+    def selectedObject: Cell[Option[EdObject]] = _selectedObject
+
     val _zoom = new MutCell(1.0)
 
     val cameraZoom: Cell[Double] = _zoom

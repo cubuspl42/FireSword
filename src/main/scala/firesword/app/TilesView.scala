@@ -212,7 +212,13 @@ object TilesView {
       },
     );
 
-    def drawObject(ctx: CanvasRenderingContext2D, cameraTransform: Transform, obj: EdObject) = {
+    def drawObject(
+                    ctx: CanvasRenderingContext2D,
+                    cameraTransform: Transform,
+                    obj: EdObject,
+                    position: Vec2d,
+                    isSelected: Boolean,
+                  ) = {
       val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
 
       val imageSetOpt = editor.rezIndex.getImageSet(fqImageSetId)
@@ -232,10 +238,9 @@ object TilesView {
         val sy: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Invert) != 0) -1 else 1
         val mirror = scale(Vec2d(sx, sy))
 
-        val position = translate(obj.position.sample() + texture.offset)
+        val positionTransform = translate(position + texture.offset)
 
-        val camera = cameraTransform
-        val transform = camera * position * mirror * center
+        val transform = cameraTransform * positionTransform * mirror * center
 
         ctx.setTransform(
           transform.a,
@@ -247,103 +252,37 @@ object TilesView {
         )
 
         ctx.drawImage(image, 0, 0)
+
+        if (isSelected) {
+          ctx.strokeStyle = "red"
+          ctx.lineWidth = 2.0
+          strokeRoundedRect(ctx, 0, 0, image.width, image.height, 4)
+        }
       })
     }
 
     val objectsDrawFns = objects
       .sortedBy(obj => obj.z)
-      //        .toList()
       .fuseMap(obj => {
-        //        console.log("@@@ 2")
 
-        obj.position.map(pos => (ctx: CanvasRenderingContext2D, cameraTransform: Transform) => {
-          drawObject(ctx, cameraTransform, obj)
-        })
-        //          Const((ctx: CanvasRenderingContext2D) => {})
+
+        Cell.map2(
+          obj.position,
+          editor.selectedObject.map(_.contains(obj)),
+          (
+            position: Vec2d,
+            isSelected: Boolean,
+          ) => (ctx: CanvasRenderingContext2D, cameraTransform: Transform) => {
+            drawObject(
+              ctx,
+              cameraTransform,
+              obj,
+              position,
+              isSelected,
+            )
+          },
+        )
       })
-
-    //    val drawFn = cameraTransform.switchMapC(cameraTransform => {
-    //
-    //      println("@@@ 1")
-    //
-    //      def drawTiles(ctx: CanvasRenderingContext2D): Unit = {
-    //        val camera = cameraTransform
-    //
-    //        val transform = camera
-    //
-    //        ctx.setTransform(
-    //          transform.a,
-    //          transform.b,
-    //          transform.c,
-    //          transform.d,
-    //          transform.e,
-    //          transform.f,
-    //        )
-    //
-    //        tiles foreach {
-    //          case (coord, tile) => {
-    //            val tileImage = editor.tileImageBank.getTileImage(tile)
-    //            ctx.drawImage(tileImage, coord.j * 64, coord.i * 64)
-    //          }
-    //        }
-    //      }
-    //
-    //
-    //      val objectsDrawFns = objects
-    //        .sortedBy(obj => obj.z)
-    //        //        .toList()
-    //        .fuseMap(obj => {
-    //          //          console.log("@@@ 2")
-    //
-    //
-    //          obj.position.map(pos => (ctx: CanvasRenderingContext2D) => {
-    //            val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
-    //
-    //            val imageSetOpt = editor.rezIndex.getImageSet(fqImageSetId)
-    //            val i = obj.wwdObject.i
-    //            val textureOpt = imageSetOpt.flatMap(imageSet => imageSet.getTexture(i))
-    //
-    //            textureOpt.foreach(texture => {
-    //
-    //              val image = texture.htmlImage
-    //              val size = Vec2d(image.width, image.height)
-    //              val halfSize = size / 2
-    //
-    //
-    //              val center = translate(halfSize * -1)
-    //
-    //              val sx: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Mirror) != 0) -1 else 1
-    //              val sy: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Invert) != 0) -1 else 1
-    //              val mirror = scale(Vec2d(sx, sy))
-    //
-    //              val position = translate(obj.position.sample() + texture.offset)
-    //
-    //              val camera = cameraTransform
-    //              val transform = camera * position * mirror * center
-    //
-    //              ctx.setTransform(
-    //                transform.a,
-    //                transform.b,
-    //                transform.c,
-    //                transform.d,
-    //                transform.e,
-    //                transform.f,
-    //              )
-    //
-    //              ctx.drawImage(image, 0, 0)
-    //            })
-    //          })
-    //
-    //          //          Const((ctx: CanvasRenderingContext2D) => {})
-    //        })
-    //
-    //      //      val objectsDrawFns = DynamicList.empty[CanvasRenderingContext2D => Unit]()
-    //
-    //      objectsDrawFns.content.map(drawFns => (ctx: CanvasRenderingContext2D) => {
-    //        //        drawTiles(ctx)
-    //        drawFns.take(500).foreach(drawFn => drawFn(ctx))
-    //      })
-    //    })
 
     def drawTiles(ctx: CanvasRenderingContext2D, cameraTransform: Transform): Unit = {
       val canvas = ctx.canvas
@@ -387,17 +326,42 @@ object TilesView {
 
     val theView = canvasView(drawFn_)
 
-        theView.onPointerDown.listen(e => {
-          val viewPoint = widgetV(theView, e)
-          val invertedTransform = cameraTransform.sample().inversed()
-          val worldPoint = invertedTransform.transform(viewPoint)
-          val obj = editor.findClosestObject(worldPoint)
+    theView.onPointerDown.listen(e => {
+      val viewPoint = widgetV(theView, e)
+      val invertedTransform = cameraTransform.sample().inversed()
+      val worldPoint = invertedTransform.transform(viewPoint)
+      val obj = editor.findClosestObject(worldPoint)
 
-          obj.move(Vec2d(32, 0))
+//      obj.move(Vec2d(32, 0))
 
-          println(obj.wwdObject.id)
-        })
+      editor.selectClosestObject(worldPoint)
+
+      println(obj.wwdObject.id)
+    })
 
     theView
+  }
+
+  private def strokeRoundedRect(
+                                 ctx: CanvasRenderingContext2D,
+                                 x: Double,
+                                 y: Double,
+                                 width: Double,
+                                 height: Double,
+                                 radius: Double,
+                               ) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+
+    ctx.stroke();
   }
 }
