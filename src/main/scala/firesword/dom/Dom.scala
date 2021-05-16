@@ -24,6 +24,10 @@ object Dom {
 
   class Widget(val node: Element) {
 
+    lazy val onMouseDown: EventStream[MouseEvent] =
+      elementEventStream[MouseEvent](node, "mousedown")
+
+
     lazy val onPointerDown: EventStream[PointerEvent] =
       elementEventStream[PointerEvent](node, "pointerdown")
 

@@ -174,18 +174,20 @@ object TilesView {
       widgetV(tilesViewDiv, e)
     }
 
-    tilesViewDiv.onPointerDown.listen(e => {
-      val cameraState = editor.camera.state.sample()
+    tilesViewDiv.onMouseDown.listen(e => {
+      if (e.button == 2) { // Secondary mouse button
+        val cameraState = editor.camera.state.sample()
 
-      cameraState match {
-        case freeCamera: FreeCamera =>
-          val targetPoint = tilesViewDiv.onMouseMove.hold(e)
-            .map(calculateTargetPoint)
+        cameraState match {
+          case freeCamera: FreeCamera =>
+            val targetPoint = tilesViewDiv.onMouseMove.hold(e)
+              .map(calculateTargetPoint)
 
-          freeCamera.dragCamera(
-            targetPoint = targetPoint,
-            stop = tilesViewDiv.onPointerUp.map(_ => ()),
-          )
+            freeCamera.dragCamera(
+              targetPoint = targetPoint,
+              stop = tilesViewDiv.onPointerUp.map(_ => ()),
+            )
+        }
       }
     })
 
@@ -326,17 +328,17 @@ object TilesView {
 
     val theView = canvasView(drawFn_)
 
-    theView.onPointerDown.listen(e => {
-      val viewPoint = widgetV(theView, e)
-      val invertedTransform = cameraTransform.sample().inversed()
-      val worldPoint = invertedTransform.transform(viewPoint)
-      val obj = editor.findClosestObject(worldPoint)
+    theView.onMouseDown.listen(e => {
+      if (e.button == 0) {
+        val viewPoint = widgetV(theView, e)
+        val invertedTransform = cameraTransform.sample().inversed()
+        val worldPoint = invertedTransform.transform(viewPoint)
+        val obj = editor.findClosestObject(worldPoint)
 
-//      obj.move(Vec2d(32, 0))
+        editor.selectClosestObject(worldPoint)
 
-      editor.selectClosestObject(worldPoint)
-
-      println(obj.wwdObject.id)
+        println(obj.wwdObject.id)
+      }
     })
 
     theView
