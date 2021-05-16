@@ -348,6 +348,7 @@ object TilesView {
     //    })
 
     def drawTiles(ctx: CanvasRenderingContext2D, cameraTransform: Transform): Unit = {
+      val canvas = ctx.canvas
       val camera = cameraTransform
 
       val transform = camera
@@ -364,7 +365,12 @@ object TilesView {
       tiles foreach {
         case (coord, tile) => {
           val tileImage = editor.tileImageBank.getTileImage(tile)
-          ctx.drawImage(tileImage, coord.j * 64, coord.i * 64)
+          val p = Vec2(coord.j * 64, coord.i * 64)
+          val cp = cameraTransform.transform(p)
+
+          if (cp.x >= -64 && cp.x < canvas.width && cp.y >= -64 && cp.y < canvas.height) {
+            ctx.drawImage(tileImage, coord.j * 64, coord.i * 64)
+          }
         }
       }
     }
@@ -383,16 +389,16 @@ object TilesView {
 
     val theView = canvasView(drawFn_)
 
-    //    theView.onPointerDown.listen(e => {
-    //      val viewPoint = widgetV(theView, e)
-    //      val invertedTransform = cameraTransform.sample().inversed()
-    //      val worldPoint = invertedTransform.transform(viewPoint)
-    //      val obj = editor.findClosestObject(worldPoint)
-    //
-    //      obj.move(Vec2(32, 0))
-    //
-    //      println(obj.wwdObject.id)
-    //    })
+        theView.onPointerDown.listen(e => {
+          val viewPoint = widgetV(theView, e)
+          val invertedTransform = cameraTransform.sample().inversed()
+          val worldPoint = invertedTransform.transform(viewPoint)
+          val obj = editor.findClosestObject(worldPoint)
+
+          obj.move(Vec2(32, 0))
+
+          println(obj.wwdObject.id)
+        })
 
     theView
   }
