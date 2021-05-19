@@ -7,6 +7,7 @@ import firesword.frp.cell.CellFromFuture.CellFromFuture
 import firesword.frp.cell.CellSequenceList.CellSequenceList
 import firesword.frp.cell.Follow.CellFollowFirst
 import firesword.frp.cell.Map2.CellMap2
+import firesword.frp.cell.Map3.CellMap3
 import firesword.frp.cell.SwitchC.CellSwitchC
 
 import scala.concurrent.Future
@@ -37,14 +38,18 @@ object Cell {
   def map2[A, B, C](ca: Cell[A], cb: Cell[B], f: (A, B) => C): Cell[C] =
     new CellMap2(ca, cb, f).cached()
 
+  def map3[A, B, C, D](ca: Cell[A], cb: Cell[B], cc: Cell[C], f: (A, B, C) => D): Cell[D] =
+    new CellMap3(ca, cb, cc, f).cached()
+
+
   def followFirst[A](a: A, f: A => EventStream[A]): Cell[A] =
     new CellFollowFirst[A](a, f)
 
   def switchC[A](cca: Cell[Cell[A]]): Cell[A] =
     new CellSwitchC(cca).cached()
 
-//  def switchHoldC[A](initialCell: Cell[A], steps: EventStream[Cell[A]]): Cell[A] =
-//    switchC(steps.hold(initialCell))
+  //  def switchHoldC[A](initialCell: Cell[A], steps: EventStream[Cell[A]]): Cell[A] =
+  //    switchC(steps.hold(initialCell))
 
   def fromFuture[A, B](
                         future: Future[A],

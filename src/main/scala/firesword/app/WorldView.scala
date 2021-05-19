@@ -97,6 +97,7 @@ object WorldView {
                     obj: EdObject,
                     position: Vec2d,
                     isSelected: Boolean,
+                    isEdited: Boolean,
                   ): Unit = {
       //      val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
 
@@ -134,7 +135,7 @@ object WorldView {
         ctx.drawImage(image, 0, 0)
 
         if (isSelected) {
-          ctx.strokeStyle = "red"
+          ctx.strokeStyle = if (isEdited) "blue" else "red"
           ctx.lineWidth = 2.0
           strokeRoundedRect(ctx, 0, 0, image.width, image.height, 4)
         }
@@ -144,19 +145,22 @@ object WorldView {
     val objectsDrawFns = objects
       .sortedBy(obj => obj.z)
       .fuseMap(obj => {
-        Cell.map2(
+        Cell.map3(
           obj.position,
           editor.selectedObject.map(_.contains(obj)),
+          editor.editedObject.map(_.contains(obj)),
           (
             position: Vec2d,
             isSelected: Boolean,
+            isEdited: Boolean,
           ) => (ctx: CanvasRenderingContext2D, cameraTransform: Transform) => {
             drawObject(
-              ctx,
-              cameraTransform,
-              obj,
-              position,
-              isSelected,
+              ctx = ctx,
+              cameraTransform = cameraTransform,
+              obj = obj,
+              position = position,
+              isSelected = isSelected,
+              isEdited = isEdited,
             )
           },
         )
@@ -239,8 +243,7 @@ object WorldView {
       }
 
       if (e.button == 1) {
-
-        editor.selectObject(edObject = editor.anotherObject)
+        editor.selectedObject.sample().foreach(editor.editObject)
       }
     })
 

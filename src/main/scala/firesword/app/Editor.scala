@@ -43,7 +43,7 @@ object Editor {
 
     val tileImageBank: TileImageBank = resourceBank.tileImageBank
 
-//    val imageSetBank = new ImageSetBank()
+    //    val imageSetBank = new ImageSetBank()
 
     private val world = readWorld(worldBuffer)
 
@@ -114,6 +114,14 @@ object Editor {
     }
 
     def selectedObject: Cell[Option[EdObject]] = _selectedObject
+
+    private val _editedObject = new MutCell[Option[EdObject]](None)
+
+    def editedObject: Cell[Option[EdObject]] = _editedObject
+
+    def editObject(edObject: EdObject): Unit = {
+      _editedObject.set(Some(edObject))
+    }
 
     val _zoom = new MutCell(1.0)
 
