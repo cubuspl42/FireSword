@@ -1,5 +1,6 @@
 package firesword.wwd
 
+import firesword.base.TextDecoder.decoder
 import firesword.wwd.Geometry.Rectangle
 
 import scala.language.implicitConversions
@@ -18,13 +19,7 @@ object DataStream {
   implicit def implicitUint8ArrayExt(self: Uint8Array): Uint8ArrayExt =
     self.asInstanceOf[Uint8ArrayExt]
 
-  @js.native
-  @JSGlobal("TextDecoder")
-  class TextDecoder(utfLabel: js.UndefOr[String]) extends js.Object {
-    def decode(buffer: Uint8Array): String = js.native
-  }
 
-  val decoder = new TextDecoder("utf-8")
 
   class ByteString(val byteArray: Uint8Array) {
     override def toString: String = decoder.decode(byteArray)

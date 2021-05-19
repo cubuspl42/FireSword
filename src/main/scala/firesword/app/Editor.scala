@@ -5,6 +5,7 @@ import firesword.app.EdObject.EdObject
 import firesword.app.Geometry.Vec2d
 import firesword.app.RezIndex.RezIndex
 import firesword.app.TileImageBank.TileImageBank
+import firesword.base.TextDecoder.decoder
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
 import firesword.frp.DynamicSet
@@ -12,6 +13,7 @@ import firesword.frp.DynamicSet.DynamicSet
 import firesword.frp.MutCell.MutCell
 import firesword.scalajsdomext.Fetch.fetchArrayBuffer
 import firesword.wwd.DataStream
+import firesword.wwd.DataStream.ByteString
 import firesword.wwd.Wwd.readWorld
 import org.scalajs.dom.{console, window}
 
@@ -41,11 +43,23 @@ object Editor {
 
     val tileImageBank: TileImageBank = resourceBank.tileImageBank
 
-    val imageSetBank = new ImageSetBank()
+//    val imageSetBank = new ImageSetBank()
 
     private val world = readWorld(worldBuffer)
 
     private val plane = world.planes(1)
+
+    private def decode(b: ByteString): String =
+      decoder.decode(b.byteArray)
+
+    val prefixMap = Map(
+      decode(world.prefix1) -> decode(world.imageSet1),
+      decode(world.prefix2) -> decode(world.imageSet2),
+      decode(world.prefix3) -> decode(world.imageSet3),
+      decode(world.prefix4) -> decode(world.imageSet4),
+    )
+
+    println(prefixMap)
 
     private def loadTiles(): Map[TileCoord, Int] = {
 
@@ -78,7 +92,7 @@ object Editor {
           new EdObject(
             wwdObject = wwdObject,
             initialPosition = Vec2d(wwdObject.x, wwdObject.y),
-            imageSetId = DataStream.decoder.decode(wwdObject.imageSet.byteArray),
+            imageSetId = decoder.decode(wwdObject.imageSet.byteArray),
           )
         }).toSet
     )

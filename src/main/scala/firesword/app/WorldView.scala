@@ -6,6 +6,7 @@ import firesword.app.EdObject.EdObject
 import firesword.app.Editor.Editor
 import firesword.app.Geometry.Vec2d
 import firesword.app.utils.CanvasRenderingContext2DUtils.strokeRoundedRect
+import firesword.app.utils.IterableExt.implicitIterableExt
 import firesword.dom.Dom.Tag.div
 import firesword.dom.Dom.{MouseDragGesture, Widget}
 import firesword.frp.Cell
@@ -76,6 +77,20 @@ object WorldView {
 
     val inversedCameraTransform = cameraTransform.map(_.inversed())
 
+
+    def expandShortImageSetId(shortImageSetId: String): Option[String] = {
+      def expandPrefix(prefix: String, expansion: String) = {
+        val sanitizedExpansion = expansion.replace('\\', '_')
+        if (shortImageSetId.startsWith(prefix))
+          Some(shortImageSetId.replace(prefix, sanitizedExpansion))
+        else None
+      }
+
+      editor.prefixMap.mapSome {
+        case (prefix, expansion) => expandPrefix(prefix, expansion)
+      }.headOption
+    }
+
     def drawObject(
                     ctx: CanvasRenderingContext2D,
                     cameraTransform: Transform,
@@ -83,9 +98,12 @@ object WorldView {
                     position: Vec2d,
                     isSelected: Boolean,
                   ): Unit = {
-      val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
+      //      val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
 
-      val imageSetOpt = editor.rezIndex.getImageSet(fqImageSetId)
+      val imageSetOpt = expandShortImageSetId(obj.imageSetId).flatMap(
+        fqImageSetId => editor.rezIndex.getImageSet(fqImageSetId)
+      )
+
       val i = obj.wwdObject.i
       val textureOpt = imageSetOpt.flatMap(imageSet => imageSet.getTexture(i))
 
