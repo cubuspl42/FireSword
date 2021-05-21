@@ -40,7 +40,6 @@ object EdObject {
   class EdObject(
                   val wwdObject: Object_,
                   initialPosition: Vec2d,
-                  val imageSetId: String,
                 ) {
     private def decode(b: ByteString): String =
       decoder.decode(b.byteArray)

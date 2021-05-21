@@ -2,8 +2,8 @@ package firesword.app
 
 import firesword.app.EdObject.EdObject
 import firesword.app.Editor.Editor
-import firesword.dom.Dom.Tag.{button, div, integerInput, span}
-import firesword.dom.Dom.{IntegerInput, Widget}
+import firesword.dom.Dom.Tag.{button, div, integerInput, span, textInput}
+import firesword.dom.Dom.{Input, IntegerInput, Widget}
 import firesword.frp.Cell.Cell
 import firesword.frp.MutCell.MutCell
 import org.scalajs.dom.document
@@ -15,8 +15,13 @@ object EditObjectDialog {
   import firesword.frp.DynamicList.Implicits.implicitStatic
   import firesword.frp.Frp.{implicitConst, implicitConstSome}
 
-  private def _labeledIntegerInput(label: String, cell: Cell[Int], set: Int => Unit): List[Widget] = {
-    val input = integerInput(cell.sample())
+  private def _labeledInput[A](
+                                createInput: A => Input[A],
+                                label: String,
+                                cell: Cell[A],
+                                set: A => Unit,
+                              ): List[Widget] = {
+    val input = createInput(cell.sample())
 
     input.value.listen(set)
 
@@ -26,9 +31,30 @@ object EditObjectDialog {
     )
   }
 
-  private def labeledIntegerInput(label: String, property: MutCell[Int]): List[Widget] = {
-    _labeledIntegerInput(label, property, property.set)
+  private def _labeledIntegerInput(
+                                    label: String,
+                                    cell: Cell[Int],
+                                    set: Int => Unit,
+                                  ): List[Widget] = _labeledInput(integerInput, label, cell, set)
+
+  private def labeledInput[A](
+                               createInput: A => Input[A],
+                               label: String,
+                               property: MutCell[A],
+                             ): List[Widget] = {
+    _labeledInput(createInput, label, property, property.set)
   }
+
+  private def labeledIntegerInput(
+                                   label: String,
+                                   property: MutCell[Int],
+                                 ): List[Widget] = labeledInput(integerInput, label, property)
+
+
+  private def labeledTextInput(
+                                label: String,
+                                property: MutCell[String],
+                              ): List[Widget] = labeledInput(textInput, label, property)
 
   def editObjectDialog(
                         editor: Editor,
@@ -44,7 +70,7 @@ object EditObjectDialog {
         inlineStyle =
           """
             |    display: grid;
-            |    grid-template-columns: max(100px) 80px;
+            |    grid-template-columns: max(100px) 150px;
             |    grid-gap: 5px;
             |""".stripMargin,
         children = children,
@@ -68,10 +94,10 @@ object EditObjectDialog {
 
                   labeledIntegerInput("id", edObject.id),
 
-                  //            labeledIntegerInput("name", edObject.name),
-                  //            labeledIntegerInput("logic", edObject.logic),
-                  //            labeledIntegerInput("imageSet", edObject.imageSet),
-                  //            labeledIntegerInput("animation", edObject.animation),
+                  labeledTextInput("name", edObject.name),
+                  labeledTextInput("logic", edObject.logic),
+                  labeledTextInput("imageSet", edObject.imageSet),
+                  labeledTextInput("animation", edObject.animation),
 
                   _labeledIntegerInput("x", edObject.x, edObject.setX),
                   _labeledIntegerInput("y", edObject.y, edObject.setY),

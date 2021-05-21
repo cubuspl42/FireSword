@@ -63,7 +63,7 @@ object Editor {
 
     private def loadTiles(): Map[TileCoord, Int] = {
       val tilesHigh = plane.tilesHigh
-//      val tilesWide = plane.tilesWide
+      //      val tilesWide = plane.tilesWide
       val tilesWide = 16
 
       val entries = for (
@@ -92,7 +92,6 @@ object Editor {
           new EdObject(
             wwdObject = wwdObject,
             initialPosition = Vec2d(wwdObject.x, wwdObject.y),
-            imageSetId = decoder.decode(wwdObject.imageSet.byteArray),
           )
         }).toSet
     )

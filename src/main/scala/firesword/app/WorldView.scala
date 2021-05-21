@@ -10,7 +10,6 @@ import firesword.app.utils.IterableExt.implicitIterableExt
 import firesword.dom.Dom.Tag.div
 import firesword.dom.Dom.{MouseDragGesture, Widget}
 import firesword.frp.Cell
-import firesword.frp.Frp.Const
 import firesword.wwd.Wwd.DrawFlags
 import org.scalajs.dom._
 
@@ -66,7 +65,6 @@ object WorldView {
 
     val objects = editor.objects
 
-
     val cameraTransform = Cell.map2(
       editor.cameraFocusPoint,
       editor.cameraZoom,
@@ -74,10 +72,9 @@ object WorldView {
         //  translate(canvasSize / 2) *
         scale(z) * translate(fp * -1)
       },
-    );
+    )
 
     val inversedCameraTransform = cameraTransform.map(_.inversed())
-
 
     def expandShortImageSetId(shortImageSetId: String): Option[String] = {
       def expandPrefix(prefix: String, expansion: String) = {
@@ -97,12 +94,13 @@ object WorldView {
                     cameraTransform: Transform,
                     obj: EdObject,
                     position: Vec2d,
+                    shortImageSetId: String,
                     isSelected: Boolean,
                     isEdited: Boolean,
                   ): Unit = {
       //      val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
 
-      val shortImageSetId = obj.imageSetId
+//      val shortImageSetId = obj.imageSet.sample()
       //      val shortImageSetId = "LEVEL_OFFICER"
 
       val imageSetOpt = expandShortImageSetId(shortImageSetId).flatMap(
@@ -149,12 +147,14 @@ object WorldView {
     val objectsDrawFns = objects
       .sortedBy(obj => obj.z.map(_.toDouble))
       .fuseMap(obj => {
-        Cell.map3(
+        Cell.map4(
           obj.position,
+          obj.imageSet,
           editor.selectedObject.map(_.contains(obj)),
           editor.editedObject.map(_.contains(obj)),
           (
             position: Vec2d,
+            imageSet: String,
             isSelected: Boolean,
             isEdited: Boolean,
           ) => (ctx: CanvasRenderingContext2D, cameraTransform: Transform) => {
@@ -163,6 +163,7 @@ object WorldView {
               cameraTransform = cameraTransform,
               obj = obj,
               position = position,
+              shortImageSetId = imageSet,
               isSelected = isSelected,
               isEdited = isEdited,
             )
@@ -186,7 +187,7 @@ object WorldView {
       )
 
       tiles foreach {
-        case (coord, tile) => {
+        case (coord, tile) =>
           val tileImage = editor.tileImageBank.getTileImage(tile)
           val p = Vec2d(coord.j * 64, coord.i * 64)
           val cp = cameraTransform.transform(p)
@@ -194,7 +195,6 @@ object WorldView {
           if (cp.x >= -64 && cp.x < canvas.width && cp.y >= -64 && cp.y < canvas.height) {
             ctx.drawImage(tileImage, coord.j * 64, coord.i * 64)
           }
-        }
       }
     }
 

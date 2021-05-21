@@ -67,16 +67,25 @@ object Dom {
       elementEventStream[MouseEvent](node, "mousemove")
   }
 
-  class TextInput
 
-  class IntegerInput(val element: HTMLInputElement) extends Widget(element) {
-    lazy val value: Cell[Int] = {
+  abstract class Input[A](element: HTMLInputElement) extends Widget(element) {
+    lazy val value: Cell[A] = {
       val onChange = elementEventStream[Event](element, "change")
 
       onChange.map(e => element.value)
         .hold(element.value)
-        .map(stringValue => stringValue.toInt)
+        .map(parseString)
     }
+
+    protected def parseString(s: String): A
+  }
+
+  class IntegerInput(element: HTMLInputElement) extends Input[Int](element) {
+    override protected def parseString(s: String): Int = s.toInt
+  }
+
+  class TextInput(element: HTMLInputElement) extends Input[String](element) {
+    override protected def parseString(s: String): String = s
   }
 
   class Button(val element: HTMLButtonElement) extends Widget(element) {
@@ -151,6 +160,13 @@ object Dom {
       element.setAttribute("value", initialValue.toString)
 
       new IntegerInput(element)
+    }
+
+    def textInput(initialValue: String): TextInput = {
+      val element = document.createElement("input").asInstanceOf[HTMLInputElement]
+      element.setAttribute("value", initialValue)
+
+      new TextInput(element)
     }
 
     def button(

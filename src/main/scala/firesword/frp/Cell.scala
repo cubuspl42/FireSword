@@ -8,6 +8,7 @@ import firesword.frp.cell.CellSequenceList.CellSequenceList
 import firesword.frp.cell.Follow.CellFollowFirst
 import firesword.frp.cell.Map2.CellMap2
 import firesword.frp.cell.Map3.CellMap3
+import firesword.frp.cell.Map4.CellMap4
 import firesword.frp.cell.SwitchC.CellSwitchC
 
 import scala.concurrent.Future
@@ -41,6 +42,8 @@ object Cell {
   def map3[A, B, C, D](ca: Cell[A], cb: Cell[B], cc: Cell[C], f: (A, B, C) => D): Cell[D] =
     new CellMap3(ca, cb, cc, f).cached()
 
+  def map4[A, B, C, D, E](ca: Cell[A], cb: Cell[B], cc: Cell[C], cd: Cell[D], f: (A, B, C, D) => E): Cell[E] =
+    new CellMap4(ca, cb, cc, cd, f).cached()
 
   def followFirst[A](a: A, f: A => EventStream[A]): Cell[A] =
     new CellFollowFirst[A](a, f)
