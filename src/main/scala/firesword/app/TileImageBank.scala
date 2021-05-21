@@ -5,6 +5,7 @@ import firesword.app.EdObject.EdObject
 import firesword.app.Editor.Editor
 import firesword.app.Geometry.Vec2d
 import firesword.app.MapExt.implicitMapOpsExt
+import firesword.app.RezIndex.{RezIndex, RezTexture}
 import firesword.dom.Dom.Tag.div
 import firesword.dom.Dom.Widget
 import firesword.frp.Cell
@@ -22,10 +23,14 @@ import scala.scalajs.js.Promise
 
 object TileImageBank {
   class TileImageBank(
-                       tileIndexToPngImage: Map[Int, HTMLImageElement]
+                       rezIndex: RezIndex,
+                       levelIndex: Int,
                      ) {
-    def getTileImage(tileIndex: Int): HTMLImageElement =
-      tileIndexToPngImage(tileIndex)
+    def getTileImage(tileIndex: Int): HTMLImageElement = {
+      val imageSet = rezIndex.getImageSet(s"LEVEL${levelIndex}_TILES_ACTION").get
+      val rezTexture: RezTexture = imageSet.getTexture(tileIndex).getOrElse(imageSet.getTexture(-1).get)
+      rezTexture.htmlImage
+    }
   }
 
   object TileImageBank {
@@ -82,16 +87,7 @@ object TileImageBank {
         img.src = src
       }).toFuture
 
-    def load(): Future[TileImageBank] =
-      tileIndexToPidFilename.traverse {
-        case (tileIndex: Int, pidFilename: String) => {
-          val pngFilename = pidFilename.replaceFirst(".PID", ".png")
-          val pngSrc = s"/assets/images/CLAW/LEVEL1/TILES/ACTION/${pngFilename}"
-          loadImage(pngSrc).map(pngImage => (tileIndex, pngImage))
-        }
-      }.map(tileIndexToPngImage =>
-        new TileImageBank(tileIndexToPngImage)
-      )
+
   }
 
 

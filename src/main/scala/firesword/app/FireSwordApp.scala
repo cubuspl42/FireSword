@@ -51,6 +51,7 @@ object FireSwordApp {
         println("Error!")
         println(throwable)
         println(throwable.getCause)
+        println(throwable.getStackTrace.mkString("Array(", ", ", ")"))
         div(
           styleClass = MyStyles.center,
           children = span("Error"),

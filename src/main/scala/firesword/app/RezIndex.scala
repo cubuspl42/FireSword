@@ -106,14 +106,13 @@ object RezIndex {
     )
   }
 
-  def load(): Future[RezIndex] = for {
+  def load(levelIndex: Int): Future[RezIndex] = for {
     rezIndexJsonAny <- fetchJson("assets/rezIndex.json");
     imageSets <- {
       val rezIndexJson = rezIndexJsonAny.asInstanceOf[Json.Root]
       val imageSetsMap = rezIndexJson.imageSets.toMap.filter({
         case (fqImageSetId: String, _) =>
-          fqImageSetId.startsWith("GAME_") || fqImageSetId.startsWith("LEVEL1_")
-//          fqImageSetId.startsWith("LEVEL1_IMAGES_OFFICER")
+          fqImageSetId.startsWith("GAME_") || fqImageSetId.startsWith(s"LEVEL${levelIndex}_")
       })
 
       imageSetsMap.traverse({

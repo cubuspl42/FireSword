@@ -60,8 +60,10 @@ object WorldView {
   def worldView(editor: Editor): Widget = {
     import Transform._
 
-    val tiles = editor.tiles.content.sample()
+    //    val tiles = editor.tiles.content.sample()
     //      .take(1000)
+
+    val tiles = editor.tiles
 
     val objects = editor.objects
 
@@ -100,7 +102,7 @@ object WorldView {
                   ): Unit = {
       //      val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
 
-//      val shortImageSetId = obj.imageSet.sample()
+      //      val shortImageSetId = obj.imageSet.sample()
       //      val shortImageSetId = "LEVEL_OFFICER"
 
       val imageSetOpt = expandShortImageSetId(shortImageSetId).flatMap(
@@ -186,14 +188,16 @@ object WorldView {
         transform.f,
       )
 
-      tiles foreach {
-        case (coord, tile) =>
-          val tileImage = editor.tileImageBank.getTileImage(tile)
-          val p = Vec2d(coord.j * 64, coord.i * 64)
-          val cp = cameraTransform.transform(p)
+      tiles.forEach {
+        case (i, j, tile) =>
+          if (tile > 0) {
+            val tileImage = editor.tileImageBank.getTileImage(tile)
+            val p = Vec2d(j * 64, i * 64)
+            val cp = cameraTransform.transform(p)
 
-          if (cp.x >= -64 && cp.x < canvas.width && cp.y >= -64 && cp.y < canvas.height) {
-            ctx.drawImage(tileImage, coord.j * 64, coord.i * 64)
+            if (cp.x >= -64 && cp.x < canvas.width && cp.y >= -64 && cp.y < canvas.height) {
+              ctx.drawImage(tileImage, j * 64, i * 64)
+            }
           }
       }
     }
@@ -241,9 +245,6 @@ object WorldView {
         } else {
           editor.selectObject(obj)
         }
-
-
-        println(obj.wwdObject.id)
       }
 
       if (e.button == 1) {

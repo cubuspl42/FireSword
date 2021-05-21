@@ -13,13 +13,6 @@ class ResourceBank(
                   )
 
 object ResourceBank {
-  def load(): Future[ResourceBank] =
-    for (
-      t <- TileImageBank.load();
-      objectPlaceholderImage <- loadImage("/assets/images/CLAW/GAME/IMAGES/POWERUPS/EXTRALIFE/FRAME001.png")
-    ) yield new ResourceBank(
-      tileImageBank = t,
-      objectPlaceholderImage = objectPlaceholderImage,
-    )
+
 }
 

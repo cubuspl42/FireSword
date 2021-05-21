@@ -4,7 +4,7 @@ import firesword.wwd.DataStream.{ByteString, DataStream}
 import firesword.wwd.Geometry.Rectangle
 import pako.Pako
 
-import scala.scalajs.js.typedarray.{ArrayBuffer, Uint8Array}
+import scala.scalajs.js.typedarray.{ArrayBuffer, Int32Array, Uint8Array}
 
 object Wwd {
   case class World(
@@ -39,7 +39,7 @@ object Wwd {
                     zCoord: Int,
                     tilesWide: Int,
                     tilesHigh: Int,
-                    tiles: List[Int],
+                    tiles: Int32Array,
                     imageSets: List[ByteString],
                     objects: List[Object_],
                   )
@@ -439,13 +439,19 @@ object Wwd {
     plane
   }
 
-  def readPlaneTiles(header: WwdPlaneHeader, wwdBuffer: ArrayBuffer): List[Int] = {
+  def readPlaneTiles(header: WwdPlaneHeader, wwdBuffer: ArrayBuffer): Int32Array = {
     val stream = new DataStream(wwdBuffer, header.tilesOffset)
 
-    for (
-      _ <- range(header.tilesHigh);
-      _ <- range(header.tilesWide)
-    ) yield stream.readInt32()
+    val h = header.tilesHigh
+    val w = header.tilesWide
+    val size = h * w
+    val array = new Int32Array(size)
+
+    for (i <- 0 until size) {
+      array.set(i,  stream.readInt32())
+    }
+
+    array
   }
 
   def readPlaneImageSets(header: WwdPlaneHeader, wwdBuffer: ArrayBuffer): List[ByteString] = {

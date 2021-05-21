@@ -5,6 +5,7 @@ import firesword.app.EdObject.EdObject
 import firesword.app.Geometry.Vec2d
 import firesword.app.RezIndex.RezIndex
 import firesword.app.TileImageBank.TileImageBank
+import firesword.app.utils.IntMatrixMap
 import firesword.base.TextDecoder.decoder
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
@@ -14,9 +15,11 @@ import firesword.frp.MutCell.MutCell
 import firesword.scalajsdomext.Fetch.fetchArrayBuffer
 import firesword.wwd.DataStream
 import firesword.wwd.DataStream.ByteString
-import firesword.wwd.Wwd.readWorld
+import firesword.wwd.DataStream.ByteString.decode
+import firesword.wwd.Wwd.{World, readWorld}
 import org.scalajs.dom.{console, window}
 
+import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
 import scala.language.implicitConversions
@@ -33,24 +36,19 @@ object Editor {
   type Tile = Int
 
   class Editor(
-                worldBuffer: ArrayBuffer,
-                val resourceBank: ResourceBank,
+                private val world: World,
                 val rezIndex: RezIndex,
+                levelIndex: Int,
               ) {
 
     def findClosestObject(p: Vec2d): EdObject =
       objects.content.sample().minBy(obj => (obj.position.sample() - p).length)
 
-    val tileImageBank: TileImageBank = resourceBank.tileImageBank
+    val tileImageBank = new TileImageBank(rezIndex, levelIndex = levelIndex)
 
     //    val imageSetBank = new ImageSetBank()
 
-    private val world = readWorld(worldBuffer)
-
     private val plane = world.planes(1)
-
-    private def decode(b: ByteString): String =
-      decoder.decode(b.byteArray)
 
     val prefixMap = Map(
       decode(world.prefix1) -> decode(world.imageSet1),
@@ -59,31 +57,11 @@ object Editor {
       decode(world.prefix4) -> decode(world.imageSet4),
     )
 
-    println(prefixMap)
-
-    private def loadTiles(): Map[TileCoord, Int] = {
-      val tilesHigh = plane.tilesHigh
-      //      val tilesWide = plane.tilesWide
-      val tilesWide = 16
-
-      val entries = for (
-        i <- (0 until tilesHigh);
-        j <- (0 until tilesWide)
-      ) yield {
-        val k = i * plane.tilesWide + j
-        val tile = plane.tiles(k)
-        TileCoord(i, j) -> tile
-      }
-
-      entries
-
-        .filter(_._2 > 0)
-        .toMap
-    }
-
-    private val _tiles = new MutDynamicMap(loadTiles())
-
-    val tiles: DynamicMap[TileCoord, Tile] = _tiles
+    val tiles = new IntMatrixMap(
+      width = plane.tilesWide,
+      height = plane.tilesHigh,
+      array = plane.tiles,
+    )
 
     val objects: DynamicSet[EdObject] = DynamicSet.of(
       plane.objects
@@ -96,20 +74,13 @@ object Editor {
         }).toSet
     )
 
-
-    private val _initialSelectedObject = objects.content.sample().filter(o => o.wwdObject.id == 3024).head
-
-
-    val anotherObject = objects.content.sample().filter(o => o.wwdObject.id == 1171).head
-
-    private val _selectedObject = new MutCell[Option[EdObject]](Some(_initialSelectedObject))
+    private val _selectedObject = new MutCell[Option[EdObject]](None)
 
     def selectObject(edObject: EdObject): Unit = {
       val t1 = window.performance.now()
       _selectedObject.set(Some(edObject))
       val t2 = window.performance.now()
-
-      console.log(s"t2 - t1 = ${t2 - t1}")
+      //      console.log(s"t2 - t1 = ${t2 - t1}")
     }
 
     def selectedObject: Cell[Option[EdObject]] = _selectedObject
@@ -162,18 +133,29 @@ object Editor {
   private def fetchWorldBuffer(): Future[ArrayBuffer] =
     fetchArrayBuffer("assets/worlds/WORLD.WWD")
 
+  private val levelIndexRegex = """(\d+)""".r
+
+  def findLevelIndex(name: String): Int = {
+    val levelIndexStr = levelIndexRegex findFirstIn name
+    levelIndexStr.fold(
+      throw new IllegalArgumentException("Level index not present in world name")
+    )(_.toInt)
+  }
+
   def load(): Future[Editor] = {
     for (
       worldBuffer <- fetchWorldBuffer();
-      resourceBank <- ResourceBank.load();
-      rezIndex <- RezIndex.load()
-    ) yield {
-      println("new Editor")
-      new Editor(
-        worldBuffer = worldBuffer,
-        resourceBank = resourceBank,
-        rezIndex = rezIndex,
-      )
-    }
+      editor <- {
+        val world = readWorld(worldBuffer)
+        val levelIndex = findLevelIndex(world.name.decode())
+        for (
+          rezIndex <- RezIndex.load(levelIndex = levelIndex)
+        ) yield new Editor(
+          world = world,
+          rezIndex = rezIndex,
+          levelIndex = levelIndex,
+        )
+      }
+    ) yield editor
   }
 }

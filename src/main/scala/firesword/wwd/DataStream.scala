@@ -5,8 +5,7 @@ import firesword.wwd.Geometry.Rectangle
 
 import scala.language.implicitConversions
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSGlobal
-import scala.scalajs.js.typedarray.{ArrayBuffer, DataView, DataViewExt, Uint8Array}
+import scala.scalajs.js.typedarray.{ArrayBuffer, DataView, Uint8Array}
 
 object DataStream {
   @js.native
@@ -20,14 +19,19 @@ object DataStream {
     self.asInstanceOf[Uint8ArrayExt]
 
 
-
   class ByteString(val byteArray: Uint8Array) {
     override def toString: String = decoder.decode(byteArray)
+
+    def decode(): String =
+      decoder.decode(byteArray)
   }
 
   object ByteString {
     def empty(): ByteString =
       new ByteString(new Uint8Array(0))
+
+    def decode(b: ByteString): String =
+      b.decode()
   }
 
   class DataStream(_arrayBuffer: ArrayBuffer, initialOffset: Int = 0) {
