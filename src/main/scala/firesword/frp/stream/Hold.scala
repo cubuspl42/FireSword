@@ -23,8 +23,8 @@ object Hold {
 
     // TODO: Remove listener
     steps.addListener(a => {
-      notifyListeners(a)
       _currentValue = a
+      notifyListeners(a)
     })
   }
 }

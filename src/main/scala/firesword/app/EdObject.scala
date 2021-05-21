@@ -103,7 +103,7 @@ object EdObject {
       )
 
     def position: Cell[Vec2d] = _positionState.switchMapC(_.position)
-    
+
     position.listen(_ => {})
 
     def move(delta: Cell[Vec2d], commit: EventStream[Unit]): Unit = {

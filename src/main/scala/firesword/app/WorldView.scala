@@ -102,8 +102,8 @@ object WorldView {
                   ): Unit = {
       //      val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
 
-      //      val shortImageSetId = obj.imageSetId
-      val shortImageSetId = "LEVEL_OFFICER"
+      val shortImageSetId = obj.imageSetId
+      //      val shortImageSetId = "LEVEL_OFFICER"
 
       val imageSetOpt = expandShortImageSetId(shortImageSetId).flatMap(
         fqImageSetId => editor.rezIndex.getImageSet(fqImageSetId)

@@ -11,8 +11,8 @@ object MutCell {
 
     @action
     def set(a: A): Unit = {
-      notifyListeners(a)
       value = a
+      notifyListeners(a)
     }
 
     @action
