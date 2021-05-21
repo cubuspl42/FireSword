@@ -13,13 +13,14 @@ object CellCached {
 
     @behavior
     def sample(): A = cachedValue.getOrElse({
-//      console.log("source.sample()")
       source.sample()
     })
 
     private def handle(a: A): Unit = {
-      notifyListeners(a)
-      cachedValue = Some(a)
+      if (!cachedValue.contains(a)) {
+        notifyListeners(a)
+        cachedValue = Some(a)
+      }
     }
 
     override protected def onStart(): Unit = {

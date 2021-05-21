@@ -12,7 +12,7 @@ object SimpleCell {
     private[this] val listeners = new mutable.HashSet[A => Unit]
 
     def map[B](f: A => B): Cell[B] =
-      new CellMap[A, B](this, f)
+      new CellMap[A, B](this, f).cached()
 
     private[frp] def addListener(h: A => Unit): Unsubscribe = {
       listeners.addOne(h)

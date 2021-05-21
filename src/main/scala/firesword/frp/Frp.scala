@@ -1,14 +1,8 @@
 package firesword.frp
 
 import firesword.frp.Cell.Cell
-import firesword.frp.EventStream.EventStream
 import firesword.frp.MutCell.MutCell
-import firesword.frp.SimpleEventStream.SimpleEventStream
-import firesword.frp.cell.Follow.CellFollowFirst
-import firesword.frp.cell.Map.CellMap
-import firesword.frp.cell.SwitchC.CellSwitchC
 
-import scala.collection.mutable
 import scala.language.implicitConversions
 
 object Frp {

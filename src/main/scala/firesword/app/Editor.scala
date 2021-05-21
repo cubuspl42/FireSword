@@ -63,6 +63,8 @@ object Editor {
       array = plane.tiles,
     )
 
+    println(s"Object count: ${plane.objects.size}")
+
     val objects: DynamicSet[EdObject] = DynamicSet.of(
       plane.objects
         //        .take(500)

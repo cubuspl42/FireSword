@@ -46,7 +46,7 @@ object Cell {
     new CellMap4(ca, cb, cc, cd, f).cached()
 
   def followFirst[A](a: A, f: A => EventStream[A]): Cell[A] =
-    new CellFollowFirst[A](a, f)
+    new CellFollowFirst[A](a, f).cached()
 
   def switchC[A](cca: Cell[Cell[A]]): Cell[A] =
     new CellSwitchC(cca).cached()
