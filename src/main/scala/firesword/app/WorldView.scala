@@ -29,7 +29,7 @@ object WorldView {
     import firesword.frp.Frp.implicitConstSome
 
     val tilesViewDiv = div(
-      styleClass = MyStyles.tilesView,
+      styleClass = MyStyles.worldView,
       children = List(worldView(editor))
     )
 
@@ -50,6 +50,7 @@ object WorldView {
               targetPoint = targetPoint,
               stop = tilesViewDiv.onPointerUp.map(_ => ()),
             )
+          case _ => ()
         }
       }
     })
@@ -101,7 +102,10 @@ object WorldView {
                   ): Unit = {
       //      val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
 
-      val imageSetOpt = expandShortImageSetId(obj.imageSetId).flatMap(
+      //      val shortImageSetId = obj.imageSetId
+      val shortImageSetId = "LEVEL_OFFICER"
+
+      val imageSetOpt = expandShortImageSetId(shortImageSetId).flatMap(
         fqImageSetId => editor.rezIndex.getImageSet(fqImageSetId)
       )
 
@@ -143,7 +147,7 @@ object WorldView {
     }
 
     val objectsDrawFns = objects
-      .sortedBy(obj => obj.z)
+      .sortedBy(obj => obj.z.map(_.toDouble))
       .fuseMap(obj => {
         Cell.map3(
           obj.position,

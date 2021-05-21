@@ -10,7 +10,7 @@ import firesword.frp.SourceEventStream.SourceEventStream
 import org.scalajs.dom
 import org.scalajs.dom._
 import org.scalajs.dom.html.Element
-import org.scalajs.dom.raw.HTMLElement
+import org.scalajs.dom.raw.{HTMLButtonElement, HTMLElement, HTMLInputElement}
 import scalacss.StyleA
 
 object Dom {
@@ -67,8 +67,30 @@ object Dom {
       elementEventStream[MouseEvent](node, "mousemove")
   }
 
+  class TextInput
+
+  class IntegerInput(val element: HTMLInputElement) extends Widget(element) {
+    lazy val value: Cell[Int] = {
+      val onChange = elementEventStream[Event](element, "change")
+
+      onChange.map(e => element.value)
+        .hold(element.value)
+        .map(stringValue => stringValue.toInt)
+    }
+  }
+
+  class Button(val element: HTMLButtonElement) extends Widget(element) {
+    lazy val onPressed: EventStream[MouseEvent] =
+      elementEventStream[MouseEvent](node, "click")
+  }
+
   def render(target: dom.Node, widget: Widget): Unit = {
     target.appendChild(widget.node)
+  }
+
+  def widgetList(widgets: Cell[Option[Widget]]*): DynamicList[Widget] = {
+    val list = widgets.toList;
+    DynamicList.fuseSomeStatic(list)
   }
 
   object Tag {
@@ -121,6 +143,21 @@ object Dom {
       })
 
       new Widget(element)
+    }
+
+    def integerInput(initialValue: Int): IntegerInput = {
+      val element = document.createElement("input").asInstanceOf[HTMLInputElement]
+      element.setAttribute("type", "number");
+      element.setAttribute("value", initialValue.toString)
+
+      new IntegerInput(element)
+    }
+
+    def button(
+                text: String): Button = {
+      val element = document.createElement("button").asInstanceOf[HTMLButtonElement]
+      element.innerText = text
+      new Button(element)
     }
 
     def singletonDiv(

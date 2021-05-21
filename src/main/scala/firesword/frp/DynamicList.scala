@@ -20,11 +20,20 @@ object DynamicList {
     }
   }
 
-  def empty[A](): DynamicList[A]=
+  def empty[A](): DynamicList[A] =
     new DynamicList(Const(List()))
 
-  def singleton[A](cell: Cell[A]): DynamicList[A]=
+  def singleton[A](cell: Cell[A]): DynamicList[A] =
     new DynamicList(cell.map(List(_)))
+
+  def fuse[A](dl: DynamicList[Cell[A]]): DynamicList[A] =
+    dl.fuseMap(identity)
+
+  def fuseSome[A](dl: DynamicList[Cell[Option[A]]]): DynamicList[A] =
+    new DynamicList(fuse(dl).content.map(_.flatten))
+
+  def fuseSomeStatic[A](l: List[Cell[Option[A]]]): DynamicList[A] =
+    new DynamicList(Cell.sequence(l).map(_.flatten))
 
   object Implicits {
     implicit def implicitSingleton[A](ca: Cell[A]): DynamicList[A] =

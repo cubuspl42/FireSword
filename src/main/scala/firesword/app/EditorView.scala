@@ -1,12 +1,13 @@
 package firesword.app
 
 import firesword.app.Camera.FreeCamera
+import firesword.app.EditObjectDialog.editObjectDialog
 import firesword.app.Editor.Editor
 import firesword.app.Geometry.Vec2d
 import firesword.app.WorldView.worldViewOuter
 import firesword.dom.Dom.Tag._
-import firesword.dom.Dom.Widget
-import firesword.frp.Frp.implicitConstSome
+import firesword.dom.Dom.{Widget, widgetList}
+import firesword.frp.Frp
 import org.scalajs.dom._
 import org.scalajs.dom.ext.KeyValue
 
@@ -14,7 +15,6 @@ import scala.language.implicitConversions
 
 object EditorView {
   def editorView(editor: Editor): Widget = {
-    import firesword.frp.DynamicList.Implicits.implicitStatic
 
     document.body.addEventListener("keydown", (e: KeyboardEvent) => {
       import firesword.frp.Frp.implicitSome
@@ -52,12 +52,20 @@ object EditorView {
     })
 
 
-    val theDiv = div(
-      styleClass = MyStyles.editorView,
-      children = List(
-        worldViewOuter(editor),
-      ),
+    val editObjectDialogOpt = editor.editedObject.map(editedObjectOpt =>
+      editedObjectOpt.map(editObjectDialog(editor, _))
     )
+
+    val theDiv = {
+      import Frp.implicitConstSome
+      div(
+        styleClass = MyStyles.editorView,
+        children = widgetList(
+          worldViewOuter(editor),
+          editObjectDialogOpt,
+        ),
+      )
+    }
 
     theDiv
   }

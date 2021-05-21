@@ -1,5 +1,6 @@
 package firesword.app
 
+import firesword.app.EditObjectDialog.editObjectDialog
 import firesword.app.EditorView.editorView
 import firesword.dom.Dom
 import firesword.dom.Dom.Tag._
@@ -63,5 +64,6 @@ object FireSwordApp {
     )
 
     theDiv
+
   }
 }

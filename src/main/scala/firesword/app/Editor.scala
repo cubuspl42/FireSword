@@ -62,10 +62,13 @@ object Editor {
     println(prefixMap)
 
     private def loadTiles(): Map[TileCoord, Int] = {
+      val tilesHigh = plane.tilesHigh
+//      val tilesWide = plane.tilesWide
+      val tilesWide = 16
 
       val entries = for (
-        i <- (0 until plane.tilesHigh);
-        j <- (0 until plane.tilesWide)
+        i <- (0 until tilesHigh);
+        j <- (0 until tilesWide)
       ) yield {
         val k = i * plane.tilesWide + j
         val tile = plane.tiles(k)
@@ -75,9 +78,6 @@ object Editor {
       entries
 
         .filter(_._2 > 0)
-        //        .take(100)
-
-
         .toMap
     }
 
@@ -121,6 +121,10 @@ object Editor {
 
     def editObject(edObject: EdObject): Unit = {
       _editedObject.set(Some(edObject))
+    }
+
+    def stopEditObject(): Unit = {
+      _editedObject.set(None)
     }
 
     val _zoom = new MutCell(1.0)

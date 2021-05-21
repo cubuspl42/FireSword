@@ -10,6 +10,9 @@ import scala.language.implicitConversions
 object CanvasView {
   def canvasView(drawFn: Cell[CanvasRenderingContext2D => Unit]): Widget = {
     val canvas = document.createElement("canvas").asInstanceOf[Canvas]
+
+    canvas.addEventListener("contextmenu", (e: Event) => e.preventDefault())
+
     canvas.style = "width: 100%; height: 100%;"
 
     val ctx = canvas.getContext("2d").asInstanceOf[CanvasRenderingContext2D]

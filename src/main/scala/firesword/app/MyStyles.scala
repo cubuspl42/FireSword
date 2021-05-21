@@ -2,6 +2,7 @@ package firesword.app
 
 import scalacss.DevDefaults._
 
+import scala.List
 import scala.language.postfixOps
 
 object MyStyles extends StyleSheet.Inline {
@@ -53,14 +54,47 @@ object MyStyles extends StyleSheet.Inline {
   val editorView: StyleA = style(
     width(100 %%),
     height(100 %%),
+  )
+
+
+  val worldView: StyleA = style(
+    position absolute,
+    width(100 %%),
+    height(100 %%),
+
+    overflow hidden,
+  )
+
+  val editObjectDialogWrapper: StyleA = style(
+    position absolute,
+    width(100 %%),
+    height(100 %%),
+
+    pointerEvents none,
+    display flex,
+    flexDirection column,
+    alignItems center,
+    justifyContent center,
+  )
+
+  val editObjectDialog: StyleA = style(
+    width(480 px),
+    padding(20 px),
+    gap(20 px),
+
+    pointerEvents auto,
+
+    backgroundColor lightgrey,
 
     display flex,
     flexDirection column,
+
   )
 
-  val tilesView: StyleA = style(
-    flexGrow(1),
-    overflow hidden,
+  val editObjectDialogRow: StyleA = style(
+    display flex,
+    flexDirection row,
+    justifyContent spaceAround,
   )
 
   val tilesRoot: StyleA = style(
@@ -101,7 +135,6 @@ object MyStyles extends StyleSheet.Inline {
 
   val tileId: StyleA = style(
     display flex,
-
   )
 
 }
