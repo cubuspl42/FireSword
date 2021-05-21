@@ -16,10 +16,26 @@ import scala.language.implicitConversions
 
 object EdObject {
 
-  private case class PositionState(
-                                    position: Cell[Vec2d],
-                                    nextState: EventStream[PositionState],
-                                  )
+  private trait PositionState {
+    def position: Cell[Vec2d]
+
+    def nextState: EventStream[PositionState]
+  }
+
+  private case class IdlePosition(
+                                   initialPosition: Vec2d,
+                                   override val nextState: EventStream[PositionState],
+                                 ) extends PositionState {
+    override val position = new MutCell[Vec2d](initialPosition)
+  }
+
+  private case class MovedPosition(
+                                    initialPosition: Vec2d,
+                                    delta: Cell[Vec2d],
+                                    override val nextState: EventStream[PositionState],
+                                  ) extends PositionState {
+    override val position: Cell[Vec2d] = delta.map(initialPosition + _)
+  }
 
   class EdObject(
                   val wwdObject: Object_,
@@ -36,8 +52,24 @@ object EdObject {
     val imageSet = new MutCell(decode(wwdObject.imageSet))
     val animation = new MutCell(decode(wwdObject.animation))
 
-    val x = new MutCell(wwdObject.x)
-    val y = new MutCell(wwdObject.y)
+    lazy val x: Cell[Int] = position.map(_.x.toInt)
+    lazy val y: Cell[Int] = position.map(_.y.toInt)
+
+    private def setPosition(p: Vec2d): Unit = {
+      _positionState.sample() match {
+        case ip: IdlePosition => ip.position.set(p)
+        case _ => ()
+      }
+    }
+
+    def setX(x: Int): Unit = {
+      setPosition(Vec2d(x.toDouble, y.sample()))
+    }
+
+    def setY(y: Int): Unit = {
+      setPosition(Vec2d(x.sample(), y.toDouble))
+    }
+
     val z = new MutCell(wwdObject.z)
     val i = new MutCell(wwdObject.i)
     val addFlags = new MutCell(wwdObject.addFlags)
@@ -88,11 +120,11 @@ object EdObject {
     //val userRect2: Rectangle= new MutCell(0)
 
 
-    private val _move = new EventStreamSink[PositionState]()
+    private val _move = new EventStreamSink[MovedPosition]()
 
     private def _buildIdlePositionState(p: Vec2d) =
-      PositionState(
-        position = Const(p),
+      IdlePosition(
+        p,
         nextState = _move,
       )
 
@@ -108,8 +140,9 @@ object EdObject {
 
     def move(delta: Cell[Vec2d], commit: EventStream[Unit]): Unit = {
       val initialPosition = position.sample()
-      _move.send(PositionState(
-        position = delta.map(initialPosition + _),
+      _move.send(MovedPosition(
+        initialPosition = initialPosition,
+        delta = delta,
         nextState = commit.map(_ => _buildIdlePositionState(position.sample())),
       ))
     }

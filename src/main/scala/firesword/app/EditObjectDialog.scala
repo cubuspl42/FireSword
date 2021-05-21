@@ -4,6 +4,7 @@ import firesword.app.EdObject.EdObject
 import firesword.app.Editor.Editor
 import firesword.dom.Dom.Tag.{button, div, integerInput, span}
 import firesword.dom.Dom.{IntegerInput, Widget}
+import firesword.frp.Cell.Cell
 import firesword.frp.MutCell.MutCell
 import org.scalajs.dom.document
 import org.scalajs.dom.raw.HTMLInputElement
@@ -14,18 +15,20 @@ object EditObjectDialog {
   import firesword.frp.DynamicList.Implicits.implicitStatic
   import firesword.frp.Frp.{implicitConst, implicitConstSome}
 
-  private def labeledIntegerInput(label: String, property: MutCell[Int]): List[Widget] = {
-    val input = integerInput(property.sample())
+  private def _labeledIntegerInput(label: String, cell: Cell[Int], set: Int => Unit): List[Widget] = {
+    val input = integerInput(cell.sample())
 
-    input.value.listen(property.set)
+    input.value.listen(set)
 
     List(
       span(s"${label}: "),
       input,
     )
-
   }
 
+  private def labeledIntegerInput(label: String, property: MutCell[Int]): List[Widget] = {
+    _labeledIntegerInput(label, property, property.set)
+  }
 
   def editObjectDialog(
                         editor: Editor,
@@ -70,8 +73,8 @@ object EditObjectDialog {
                   //            labeledIntegerInput("imageSet", edObject.imageSet),
                   //            labeledIntegerInput("animation", edObject.animation),
 
-                  labeledIntegerInput("x", edObject.x),
-                  labeledIntegerInput("y", edObject.y),
+                  _labeledIntegerInput("x", edObject.x, edObject.setX),
+                  _labeledIntegerInput("y", edObject.y, edObject.setY),
                   labeledIntegerInput("z", edObject.z),
                   labeledIntegerInput("i", edObject.i),
                   labeledIntegerInput("addFlags", edObject.addFlags),
