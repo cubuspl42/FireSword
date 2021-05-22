@@ -26,6 +26,9 @@ object DynamicList {
   def singleton[A](cell: Cell[A]): DynamicList[A] =
     new DynamicList(cell.map(List(_)))
 
+  def static[A](l: List[A]): DynamicList[A] =
+    new DynamicList(Const(l))
+
   def fuse[A](dl: DynamicList[Cell[A]]): DynamicList[A] =
     dl.fuseMap(identity)
 
@@ -42,9 +45,8 @@ object DynamicList {
     implicit def implicitStaticSingleton[A](a: A): DynamicList[A] =
       singleton(Const(a))
 
-    implicit def implicitStatic[A](list: List[A]): DynamicList[A] = {
-      new DynamicList(Const(list))
-    }
+    implicit def implicitStatic[A](list: List[A]): DynamicList[A] =
+      DynamicList.static(list)
 
     implicit def implicitDynamicList[A](list: List[A]): DynamicList[A] = {
       new DynamicList(Const(list))

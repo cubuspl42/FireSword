@@ -51,7 +51,28 @@ object MyStyles extends StyleSheet.Inline {
     backgroundColor blue,
   )
 
+  val toolBar: StyleA = style(
+    display flex,
+    flexDirection row,
+    backgroundColor(c"#77777b"),
+    height(32 px),
+    justifyContent flexEnd,
+    alignItems center,
+    paddingLeft(8 px),
+    paddingRight(8 px),
+  )
+
   val editorView: StyleA = style(
+    width(100 %%),
+    height(100 %%),
+
+    display flex,
+    flexDirection column,
+
+  )
+
+  val worldViewStack: StyleA = style(
+    position relative,
     width(100 %%),
     height(100 %%),
   )
@@ -78,7 +99,6 @@ object MyStyles extends StyleSheet.Inline {
   )
 
   val editObjectDialog: StyleA = style(
-    width(480 px),
     padding(20 px),
     gap(20 px),
 
@@ -95,6 +115,7 @@ object MyStyles extends StyleSheet.Inline {
     display flex,
     flexDirection row,
     justifyContent spaceAround,
+    gap(20 px),
   )
 
   val tilesRoot: StyleA = style(

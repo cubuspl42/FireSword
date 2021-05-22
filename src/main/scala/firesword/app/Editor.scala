@@ -8,12 +8,13 @@ import firesword.app.TileImageBank.TileImageBank
 import firesword.app.utils.IntMatrixMap
 import firesword.base.TextDecoder.decoder
 import firesword.frp.Cell.Cell
+import firesword.frp.DynamicList.DynamicList
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
-import firesword.frp.DynamicSet
+import firesword.frp.{DynamicList, DynamicSet}
 import firesword.frp.DynamicSet.DynamicSet
 import firesword.frp.MutCell.MutCell
 import firesword.scalajsdomext.Fetch.fetchArrayBuffer
-import firesword.wwd.DataStream
+import firesword.wwd.{DataStream, Wwd}
 import firesword.wwd.DataStream.ByteString
 import firesword.wwd.DataStream.ByteString.decode
 import firesword.wwd.Wwd.{World, readWorld}
@@ -49,6 +50,9 @@ object Editor {
     //    val imageSetBank = new ImageSetBank()
 
     private val plane = world.planes(1)
+
+    val planes: DynamicList[Wwd.Plane] =
+      DynamicList.static(world.planes)
 
     val prefixMap = Map(
       decode(world.prefix1) -> decode(world.imageSet1),

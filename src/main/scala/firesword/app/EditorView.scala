@@ -1,13 +1,14 @@
 package firesword.app
 
 import firesword.app.Camera.FreeCamera
-import firesword.app.EditObjectDialog.editObjectDialog
 import firesword.app.Editor.Editor
 import firesword.app.Geometry.Vec2d
-import firesword.app.WorldView.worldViewOuter
+import firesword.app.WorldViewStack.worldViewStack
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.{Widget, widgetList}
+import firesword.frp.DynamicList
 import firesword.frp.Frp
+import firesword.wwd.Wwd.Plane
 import org.scalajs.dom._
 import org.scalajs.dom.ext.KeyValue
 
@@ -15,6 +16,8 @@ import scala.language.implicitConversions
 
 object EditorView {
   def editorView(editor: Editor): Widget = {
+    import Frp.{implicitConst, implicitConstSome}
+    import DynamicList.Implicits.implicitStatic
 
     document.body.addEventListener("keydown", (e: KeyboardEvent) => {
       import firesword.frp.Frp.implicitSome
@@ -51,18 +54,28 @@ object EditorView {
       }
     })
 
+    val planeSelect = select[Plane](
+      editor.planes,
+      _.name.decode(),
+    )
 
-    val editObjectDialogOpt = editor.editedObject.map(editedObjectOpt =>
-      editedObjectOpt.map(editObjectDialog(editor, _))
+    planeSelect.value.listen(p => {
+      println(s"Selected plane: ${p.name}")
+    })
+
+    val toolBar = div(
+      styleClass = MyStyles.toolBar,
+      children = List(
+        planeSelect
+      ),
     )
 
     val theDiv = {
-      import Frp.implicitConstSome
       div(
         styleClass = MyStyles.editorView,
         children = widgetList(
-          worldViewOuter(editor),
-          editObjectDialogOpt,
+          toolBar,
+          worldViewStack(editor),
         ),
       )
     }

@@ -10,7 +10,7 @@ import firesword.frp.SourceEventStream.SourceEventStream
 import org.scalajs.dom
 import org.scalajs.dom._
 import org.scalajs.dom.html.Element
-import org.scalajs.dom.raw.{HTMLButtonElement, HTMLElement, HTMLInputElement}
+import org.scalajs.dom.raw.{HTMLButtonElement, HTMLElement, HTMLInputElement, HTMLSelectElement}
 import scalacss.StyleA
 
 object Dom {
@@ -93,6 +93,21 @@ object Dom {
       elementEventStream[MouseEvent](node, "click")
   }
 
+  class Select[A](
+                   val element: HTMLSelectElement,
+                   options: DynamicList[A],
+                 ) extends Widget(element) {
+    lazy val value: Cell[A] = {
+      val onChange = elementEventStream[Event](element, "change")
+      onChange.map(e => element.value).hold(element.value)
+        .map(iStr => {
+          val i = iStr.toInt
+          val o = options.content.sample()(i)
+          o
+        })
+    }
+  }
+
   def render(target: dom.Node, widget: Widget): Unit = {
     target.appendChild(widget.node)
   }
@@ -152,6 +167,29 @@ object Dom {
       })
 
       new Widget(element)
+    }
+
+    def select[A](
+                   options: DynamicList[A],
+                   toString: A => String,
+                 ): Select[A] = {
+
+
+      //Create and append select list
+      val element = document.createElement("select").asInstanceOf[HTMLSelectElement];
+      //      selectList.id = "mySelect";
+
+      options.content.listen(options => {
+        clearElement(element)
+        options.zipWithIndex foreach { case (o, i) =>
+          val option = document.createElement("option")
+          option.setAttribute("value", i.toString)
+          option.textContent = toString(o)
+          element.appendChild(option)
+        }
+      })
+
+      new Select(element, options)
     }
 
     def integerInput(initialValue: Int): IntegerInput = {
