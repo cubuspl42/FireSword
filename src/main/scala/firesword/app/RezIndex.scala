@@ -2,7 +2,7 @@ package firesword.app
 
 import firesword.app.Geometry.Vec2d
 import firesword.app.MapExt.implicitMapOpsExt
-import firesword.app.TileImageBank.TileImageBank.loadImage
+import firesword.app.utils.ImageUtils.loadImage
 import firesword.scalajsdomext.Fetch.fetchJson
 import org.scalajs.dom.raw.HTMLImageElement
 

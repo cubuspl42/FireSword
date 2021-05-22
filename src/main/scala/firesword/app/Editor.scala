@@ -2,6 +2,7 @@ package firesword.app
 
 import firesword.app.Camera.{Camera, FreeCamera}
 import firesword.app.EdObject.EdObject
+import firesword.app.EdPlane.EdPlane
 import firesword.app.Geometry.Vec2d
 import firesword.app.RezIndex.RezIndex
 import firesword.app.TileImageBank.TileImageBank
@@ -12,6 +13,7 @@ import firesword.frp.DynamicList.DynamicList
 import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
 import firesword.frp.{DynamicList, DynamicSet}
 import firesword.frp.DynamicSet.DynamicSet
+import firesword.frp.Frp.Const
 import firesword.frp.MutCell.MutCell
 import firesword.scalajsdomext.Fetch.fetchArrayBuffer
 import firesword.wwd.{DataStream, Wwd}
@@ -41,43 +43,26 @@ object Editor {
                 val rezIndex: RezIndex,
                 levelIndex: Int,
               ) {
-
-    def findClosestObject(p: Vec2d): EdObject =
-      objects.content.sample().minBy(obj => (obj.position.sample() - p).length)
-
     val tileImageBank = new TileImageBank(rezIndex, levelIndex = levelIndex)
 
     //    val imageSetBank = new ImageSetBank()
 
-    private val plane = world.planes(1)
+    val planes: DynamicList[EdPlane] =
+      DynamicList.static(world.planes.map(p => new EdPlane(p)))
 
-    val planes: DynamicList[Wwd.Plane] =
-      DynamicList.static(world.planes)
+    private val _activePlane = new MutCell(planes.content.sample()(1))
+
+    def activePlane: Cell[EdPlane] = _activePlane
+
+    def selectPlane(plane: EdPlane): Unit = {
+      _activePlane.set(plane)
+    }
 
     val prefixMap = Map(
       decode(world.prefix1) -> decode(world.imageSet1),
       decode(world.prefix2) -> decode(world.imageSet2),
       decode(world.prefix3) -> decode(world.imageSet3),
       decode(world.prefix4) -> decode(world.imageSet4),
-    )
-
-    val tiles = new IntMatrixMap(
-      width = plane.tilesWide,
-      height = plane.tilesHigh,
-      array = plane.tiles,
-    )
-
-    println(s"Object count: ${plane.objects.size}")
-
-    val objects: DynamicSet[EdObject] = DynamicSet.of(
-      plane.objects
-        //        .take(500)
-        .map(wwdObject => {
-          new EdObject(
-            wwdObject = wwdObject,
-            initialPosition = Vec2d(wwdObject.x, wwdObject.y),
-          )
-        }).toSet
     )
 
     private val _selectedObject = new MutCell[Option[EdObject]](None)
@@ -112,7 +97,8 @@ object Editor {
     }
 
     val camera = new Camera(FreeCamera(
-      initialFocusPoint = Vec2d(world.startX, world.startY),
+//      initialFocusPoint = Vec2d(world.startX, world.startY),
+      initialFocusPoint = Vec2d(0, 0),
       zoom = cameraZoom,
     ))
 

@@ -358,6 +358,8 @@ object Wwd {
 
   def readPlanes(wwdHeader: WwdHeader, wwdBuffer: ArrayBuffer): List[Plane] = {
     val headers = readPlaneHeaders(wwdHeader, wwdBuffer)
+
+
     headers.map(header => readPlane(header, wwdBuffer))
   }
 
@@ -394,6 +396,9 @@ object Wwd {
     stream.readUint32() // 0
     stream.readUint32() // 0
     stream.readUint32() // 0
+
+    println(s"imageSetCount: ${imageSetCount}")
+    println(s"objectCount: ${objectCount}")
 
     WwdPlaneHeader(
       size = size.toInt,

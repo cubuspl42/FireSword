@@ -70,16 +70,19 @@ object DataStream {
       def readByte(): Unit = {
         val byte = this._dataView.getUint8(this._offset);
         this._offset += 1;
-        if (byte != 0) readByte();
+        if (byte != 0) {
+          bytes.push(byte)
+          readByte()
+        }
       }
 
       readByte()
 
-      return new ByteString(new Uint8Array(bytes))
+      new ByteString(new Uint8Array(bytes))
     }
 
     def readRectangle(): Rectangle = {
-      return Rectangle.fromBounds(
+      Rectangle.fromBounds(
         this.readInt32(),
         this.readInt32(),
         this.readInt32(),

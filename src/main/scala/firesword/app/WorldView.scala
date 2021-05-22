@@ -3,6 +3,7 @@ package firesword.app
 import firesword.app.Camera.FreeCamera
 import firesword.app.CanvasView.canvasView
 import firesword.app.EdObject.EdObject
+import firesword.app.EdPlane.EdPlane
 import firesword.app.Editor.Editor
 import firesword.app.Geometry.Vec2d
 import firesword.app.utils.CanvasRenderingContext2DUtils.strokeRoundedRect
@@ -10,6 +11,7 @@ import firesword.app.utils.IterableExt.implicitIterableExt
 import firesword.dom.Dom.Tag.div
 import firesword.dom.Dom.{MouseDragGesture, Widget}
 import firesword.frp.Cell
+import firesword.frp.Cell.Cell
 import firesword.wwd.Wwd.DrawFlags
 import org.scalajs.dom._
 
@@ -63,9 +65,6 @@ object WorldView {
     //    val tiles = editor.tiles.content.sample()
     //      .take(1000)
 
-    val tiles = editor.tiles
-
-    val objects = editor.objects
 
     val cameraTransform = Cell.map2(
       editor.cameraFocusPoint,
@@ -94,6 +93,7 @@ object WorldView {
     def drawObject(
                     ctx: CanvasRenderingContext2D,
                     cameraTransform: Transform,
+                    plane: EdPlane,
                     obj: EdObject,
                     position: Vec2d,
                     shortImageSetId: String,
@@ -146,73 +146,91 @@ object WorldView {
       })
     }
 
-    val objectsDrawFns = objects
-      .sortedBy(obj => obj.z.map(_.toDouble))
-      .fuseMap(obj => {
-        Cell.map4(
-          obj.position,
-          obj.imageSet,
-          editor.selectedObject.map(_.contains(obj)),
-          editor.editedObject.map(_.contains(obj)),
-          (
-            position: Vec2d,
-            imageSet: String,
-            isSelected: Boolean,
-            isEdited: Boolean,
-          ) => (ctx: CanvasRenderingContext2D, cameraTransform: Transform) => {
-            drawObject(
-              ctx = ctx,
-              cameraTransform = cameraTransform,
-              obj = obj,
-              position = position,
-              shortImageSetId = imageSet,
-              isSelected = isSelected,
-              isEdited = isEdited,
-            )
-          },
+    def buildDrawPlaneFn(
+                          plane: EdPlane,
+                        ) = {
+
+      val tiles = plane.tiles
+
+      val objects = plane.objects
+
+      val objectsDrawFns = objects
+        .sortedBy(obj => obj.z.map(_.toDouble))
+        .fuseMap(obj => {
+          Cell.map4(
+            obj.position,
+            obj.imageSet,
+            editor.selectedObject.map(_.contains(obj)),
+            editor.editedObject.map(_.contains(obj)),
+            (
+              position: Vec2d,
+              imageSet: String,
+              isSelected: Boolean,
+              isEdited: Boolean,
+            ) => (ctx: CanvasRenderingContext2D, cameraTransform: Transform) => {
+              drawObject(
+                ctx = ctx,
+                cameraTransform = cameraTransform,
+                plane = plane,
+                obj = obj,
+                position = position,
+                shortImageSetId = imageSet,
+                isSelected = isSelected,
+                isEdited = isEdited,
+              )
+            },
+          )
+        })
+
+      def drawTiles(ctx: CanvasRenderingContext2D, cameraTransform: Transform): Unit = {
+        val canvas = ctx.canvas
+        val camera = cameraTransform
+
+        val transform = camera
+
+        ctx.setTransform(
+          transform.a,
+          transform.b,
+          transform.c,
+          transform.d,
+          transform.e,
+          transform.f,
         )
-      })
 
-    def drawTiles(ctx: CanvasRenderingContext2D, cameraTransform: Transform): Unit = {
-      val canvas = ctx.canvas
-      val camera = cameraTransform
+        tiles.forEach {
+          case (i, j, tile) =>
+            if (tile > 0) {
+              val tileImage = editor.tileImageBank.getTileImage(plane.primaryImageSet, tile)
+              val p = Vec2d(j * 64, i * 64)
+              val cp = cameraTransform.transform(p)
 
-      val transform = camera
+              if (cp.x >= -64 && cp.x < canvas.width && cp.y >= -64 && cp.y < canvas.height) {
+                ctx.drawImage(tileImage, j * 64, i * 64)
+              }
+            }
+        }
 
-      ctx.setTransform(
-        transform.a,
-        transform.b,
-        transform.c,
-        transform.d,
-        transform.e,
-        transform.f,
+
+      }
+
+      val drawFn = Cell.map2(
+        cameraTransform,
+        objectsDrawFns.content,
+        (
+          cameraTransform: Transform,
+          objectsDrawFns: List[(CanvasRenderingContext2D, Transform) => Unit],
+        ) => (ctx: CanvasRenderingContext2D) => {
+          drawTiles(ctx, cameraTransform)
+          objectsDrawFns.foreach(drawFn => drawFn(ctx, cameraTransform))
+        }
       )
 
-      tiles.forEach {
-        case (i, j, tile) =>
-          if (tile > 0) {
-            val tileImage = editor.tileImageBank.getTileImage(tile)
-            val p = Vec2d(j * 64, i * 64)
-            val cp = cameraTransform.transform(p)
-
-            if (cp.x >= -64 && cp.x < canvas.width && cp.y >= -64 && cp.y < canvas.height) {
-              ctx.drawImage(tileImage, j * 64, i * 64)
-            }
-          }
-      }
+      drawFn
     }
 
-    val drawFn = Cell.map2(
-      cameraTransform,
-      objectsDrawFns.content,
-      (
-        cameraTransform: Transform,
-        objectsDrawFns: List[(CanvasRenderingContext2D, Transform) => Unit],
-      ) => (ctx: CanvasRenderingContext2D) => {
-        drawTiles(ctx, cameraTransform)
-        objectsDrawFns.foreach(drawFn => drawFn(ctx, cameraTransform))
-      }
-    )
+
+    val drawFn =
+      editor.activePlane.switchMapC(buildDrawPlaneFn)
 
     val theView = canvasView(drawFn)
 
@@ -221,7 +239,9 @@ object WorldView {
         val viewPoint = widgetV(theView, e)
         val invertedTransform = inversedCameraTransform.sample()
         val initialWorldPoint = invertedTransform.transform(viewPoint)
-        val obj = editor.findClosestObject(initialWorldPoint)
+
+        val activePlane = editor.activePlane.sample()
+        val obj = activePlane.findClosestObject(initialWorldPoint)
 
         val isSelected = editor.selectedObject.sample().contains(obj)
 

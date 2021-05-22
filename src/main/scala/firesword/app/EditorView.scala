@@ -1,6 +1,7 @@
 package firesword.app
 
 import firesword.app.Camera.FreeCamera
+import firesword.app.EdPlane.EdPlane
 import firesword.app.Editor.Editor
 import firesword.app.Geometry.Vec2d
 import firesword.app.WorldViewStack.worldViewStack
@@ -54,13 +55,13 @@ object EditorView {
       }
     })
 
-    val planeSelect = select[Plane](
+    val planeSelect = select[EdPlane](
       editor.planes,
-      _.name.decode(),
+      _.name,
     )
 
     planeSelect.value.listen(p => {
-      println(s"Selected plane: ${p.name}")
+      editor.selectPlane(p)
     })
 
     val toolBar = div(
