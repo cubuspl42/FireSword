@@ -13,7 +13,7 @@ import firesword.frp.DynamicList.DynamicList
 import firesword.frp.MutCell.MutCell
 import firesword.scalajsdomext.Fetch.fetchArrayBuffer
 import firesword.wwd.DataStream.ByteString.decode
-import firesword.wwd.Wwd.{World, readWorld}
+import firesword.wwd.Wwd.{World, WwdPlaneFlags, planeNameBufferSize, readWorld}
 import org.scalajs.dom.window
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -43,11 +43,30 @@ object Editor {
     val planes: DynamicList[EdPlane] =
       DynamicList.static(world.planes.map(p => new EdPlane(p)))
 
-    private val _activePlane = new MutCell(planes.content.sample()(1))
+    private def _initialActivePlane() = {
+      val initialPlanes = planes.content.sample()
+      initialPlanes
+        .find((p: EdPlane) => {
+          println(s"p.wwdPlane.flags: ${p.wwdPlane.flags}")
+          (p.wwdPlane.flags & WwdPlaneFlags.MAIN_PLANE) != 0
+        })
+        .getOrElse(initialPlanes.head)
+    }
+
+    private val _activePlane = new MutCell(_initialActivePlane())
 
     def activePlane: Cell[EdPlane] = _activePlane
 
     def selectPlane(plane: EdPlane): Unit = {
+      _activePlane.sample().saveCameraFocusPoint(camera.focusPoint.sample())
+
+      val cameraState = camera.state.sample()
+      cameraState match {
+        case freeCamera: FreeCamera =>
+          freeCamera.focusAt(plane.savedCameraFocusPoint)
+        case _ => ()
+      }
+
       _activePlane.set(plane)
     }
 
@@ -90,8 +109,7 @@ object Editor {
     }
 
     val camera = new Camera(FreeCamera(
-      //      initialFocusPoint = Vec2d(world.startX, world.startY),
-      initialFocusPoint = Vec2d(0, 0),
+      initialFocusPoint = Vec2d(world.startX, world.startY),
       zoom = cameraZoom,
     ))
 

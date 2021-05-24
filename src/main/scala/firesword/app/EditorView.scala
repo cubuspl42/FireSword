@@ -57,6 +57,7 @@ object EditorView {
 
     val planeSelect = select[EdPlane](
       editor.planes,
+      editor.activePlane.sample(),
       _.name,
     )
 

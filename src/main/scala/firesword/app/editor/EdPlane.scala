@@ -5,7 +5,7 @@ import firesword.app.editor.EdObject.EdObject
 import firesword.app.utils.IntMatrixMap
 import firesword.frp.DynamicSet
 import firesword.frp.DynamicSet.DynamicSet
-import firesword.wwd.Wwd.Plane
+import firesword.wwd.Wwd.{Plane, World, WwdPlaneFlags}
 
 object EdPlane {
   class EdPlane(
@@ -35,6 +35,12 @@ object EdPlane {
     // TODO: Figure out the algorithm
     def primaryImageSet = imageSets.head
 
-    println(s"Plane ${name} imageSets: ${wwdPlane.imageSets}")
+    private var _savedCameraFocusPoint = Vec2d(0, 0)
+
+    private[editor] def saveCameraFocusPoint(fp: Vec2d): Unit = {
+      _savedCameraFocusPoint = fp
+    }
+
+    def savedCameraFocusPoint: Vec2d = _savedCameraFocusPoint
   }
 }

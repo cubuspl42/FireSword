@@ -47,6 +47,10 @@ object Camera {
 
     override val nextState: EventStream[CameraState] = _nextState
 
+    def focusAt(fp: Vec2d) = {
+      _focusPoint.set(fp)
+    }
+
     def moveCamera(delta: Vec2d): Unit = {
       _focusPoint.update(_ + delta)
     }

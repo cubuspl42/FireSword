@@ -10,7 +10,7 @@ import firesword.frp.SourceEventStream.SourceEventStream
 import org.scalajs.dom
 import org.scalajs.dom._
 import org.scalajs.dom.html.Element
-import org.scalajs.dom.raw.{HTMLButtonElement, HTMLElement, HTMLInputElement, HTMLSelectElement}
+import org.scalajs.dom.raw.{HTMLButtonElement, HTMLElement, HTMLInputElement, HTMLOptionElement, HTMLSelectElement}
 import scalacss.StyleA
 
 object Dom {
@@ -171,6 +171,7 @@ object Dom {
 
     def select[A](
                    options: DynamicList[A],
+                   initialSelected: A,
                    toString: A => String,
                  ): Select[A] = {
 
@@ -182,7 +183,12 @@ object Dom {
       options.content.listen(options => {
         clearElement(element)
         options.zipWithIndex foreach { case (o, i) =>
-          val option = document.createElement("option")
+          val option = document.createElement("option").asInstanceOf[HTMLOptionElement]
+
+          if (o == initialSelected) {
+            option.selected = true
+          }
+
           option.setAttribute("value", i.toString)
           option.textContent = toString(o)
           element.appendChild(option)
