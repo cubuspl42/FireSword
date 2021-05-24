@@ -2,6 +2,7 @@ package firesword.app
 
 import firesword.app.EditObjectDialog.editObjectDialog
 import firesword.app.EditorView.editorView
+import firesword.app.editor.Editor
 import firesword.dom.Dom
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget

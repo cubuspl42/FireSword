@@ -2,9 +2,9 @@ package firesword.app
 
 import firesword.app.Camera.FreeCamera
 import firesword.app.CanvasView.canvasView
-import firesword.app.EdObject.EdObject
-import firesword.app.EdPlane.EdPlane
-import firesword.app.Editor.Editor
+import firesword.app.editor.EdObject.EdObject
+import firesword.app.editor.EdPlane.EdPlane
+import firesword.app.editor.Editor.Editor
 import firesword.app.Geometry.Vec2d
 import firesword.app.utils.CanvasRenderingContext2DUtils.strokeRoundedRect
 import firesword.app.utils.IterableExt.implicitIterableExt

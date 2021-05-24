@@ -1,4 +1,4 @@
-package firesword.app
+package firesword.app.editor
 
 import firesword.app.Geometry.Vec2d
 import firesword.base.TextDecoder.decoder
@@ -6,13 +6,9 @@ import firesword.frp.Cell
 import firesword.frp.Cell.Cell
 import firesword.frp.EventStream.EventStream
 import firesword.frp.EventStreamSink.EventStreamSink
-import firesword.frp.Frp.Const
 import firesword.frp.MutCell.MutCell
 import firesword.wwd.DataStream.ByteString
-import firesword.wwd.Geometry.Rectangle
 import firesword.wwd.Wwd.Object_
-
-import scala.language.implicitConversions
 
 object EdObject {
 

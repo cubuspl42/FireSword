@@ -1,7 +1,7 @@
 package firesword.app
 
 import firesword.app.EditObjectDialog.editObjectDialog
-import firesword.app.Editor.Editor
+import firesword.app.editor.Editor.Editor
 import firesword.app.WorldView.worldViewOuter
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.{Widget, widgetList}

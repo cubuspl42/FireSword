@@ -1,8 +1,8 @@
 package firesword.app
 
 import firesword.app.Camera.FreeCamera
-import firesword.app.EdObject.EdObject
-import firesword.app.Editor.Editor
+import firesword.app.editor.EdObject.EdObject
+import firesword.app.editor.Editor.Editor
 import firesword.app.Geometry.Vec2d
 import firesword.app.MapExt.implicitMapOpsExt
 import firesword.app.RezIndex.{RezIndex, RezTexture}

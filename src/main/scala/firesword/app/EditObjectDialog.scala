@@ -1,7 +1,7 @@
 package firesword.app
 
-import firesword.app.EdObject.EdObject
-import firesword.app.Editor.Editor
+import firesword.app.editor.EdObject.EdObject
+import firesword.app.editor.Editor.Editor
 import firesword.dom.Dom.Tag.{button, div, integerInput, span, textInput}
 import firesword.dom.Dom.{Input, IntegerInput, Widget}
 import firesword.frp.Cell.Cell

@@ -1,28 +1,21 @@
-package firesword.app
+package firesword.app.editor
 
 import firesword.app.Camera.{Camera, FreeCamera}
-import firesword.app.EdObject.EdObject
-import firesword.app.EdPlane.EdPlane
 import firesword.app.Geometry.Vec2d
+import firesword.app.RezIndex
 import firesword.app.RezIndex.RezIndex
 import firesword.app.TileImageBank.TileImageBank
-import firesword.app.utils.IntMatrixMap
-import firesword.base.TextDecoder.decoder
+import firesword.app.editor.EdObject.EdObject
+import firesword.app.editor.EdPlane.EdPlane
 import firesword.frp.Cell.Cell
+import firesword.frp.DynamicList
 import firesword.frp.DynamicList.DynamicList
-import firesword.frp.DynamicMap.{DynamicMap, MutDynamicMap}
-import firesword.frp.{DynamicList, DynamicSet}
-import firesword.frp.DynamicSet.DynamicSet
-import firesword.frp.Frp.Const
 import firesword.frp.MutCell.MutCell
 import firesword.scalajsdomext.Fetch.fetchArrayBuffer
-import firesword.wwd.{DataStream, Wwd}
-import firesword.wwd.DataStream.ByteString
 import firesword.wwd.DataStream.ByteString.decode
 import firesword.wwd.Wwd.{World, readWorld}
-import org.scalajs.dom.{console, window}
+import org.scalajs.dom.window
 
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
 import scala.language.implicitConversions
@@ -97,7 +90,7 @@ object Editor {
     }
 
     val camera = new Camera(FreeCamera(
-//      initialFocusPoint = Vec2d(world.startX, world.startY),
+      //      initialFocusPoint = Vec2d(world.startX, world.startY),
       initialFocusPoint = Vec2d(0, 0),
       zoom = cameraZoom,
     ))

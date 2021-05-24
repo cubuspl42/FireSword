@@ -1,8 +1,8 @@
 package firesword.app
 
 import firesword.app.Camera.FreeCamera
-import firesword.app.EdPlane.EdPlane
-import firesword.app.Editor.Editor
+import firesword.app.editor.EdPlane.EdPlane
+import firesword.app.editor.Editor.Editor
 import firesword.app.Geometry.Vec2d
 import firesword.app.WorldViewStack.worldViewStack
 import firesword.dom.Dom.Tag._

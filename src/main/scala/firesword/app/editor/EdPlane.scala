@@ -1,13 +1,11 @@
-package firesword.app
+package firesword.app.editor
 
-import firesword.app.EdObject.EdObject
 import firesword.app.Geometry.Vec2d
+import firesword.app.editor.EdObject.EdObject
 import firesword.app.utils.IntMatrixMap
 import firesword.frp.DynamicSet
 import firesword.frp.DynamicSet.DynamicSet
 import firesword.wwd.Wwd.Plane
-
-import scala.language.implicitConversions
 
 object EdPlane {
   class EdPlane(

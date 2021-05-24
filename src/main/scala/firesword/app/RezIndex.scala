@@ -15,7 +15,7 @@ object MapExt {
   class MapExt[K, V](self: Map[K, V]) {
     final def traverse[K2, V2](fn: (K, V) => Future[(K2, V2)]): Future[Map[K2, V2]] =
       Future.traverse[(K, V), (K2, V2), Iterable](self)({
-        case (k1: K, v1: V) => fn(k1, v1)
+        case (k1, v1) => fn(k1, v1)
       }).map(_.toMap)
   }
 
