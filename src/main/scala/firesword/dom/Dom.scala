@@ -65,6 +65,16 @@ object Dom {
 
     lazy val onMouseMove: EventStream[MouseEvent] =
       elementEventStream[MouseEvent](node, "mousemove")
+
+    def calculateRelativePosition(clientV: Vec2d): Vec2d = {
+      val rect = node.getBoundingClientRect()
+      val x = clientV.x - rect.left
+      val y = clientV.y - rect.top
+      Vec2d(x, y)
+    }
+
+    def calculateRelativePosition(e: MouseEvent): Vec2d =
+      calculateRelativePosition(Vec2d(e.clientX, e.clientY))
   }
 
 

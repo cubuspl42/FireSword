@@ -18,53 +18,38 @@ import org.scalajs.dom._
 import scala.language.implicitConversions
 
 object WorldView {
-  def widgetV(widget: Widget, e: MouseEvent): Vec2d = {
-    val rect = widget.node.getBoundingClientRect()
-    val x = e.clientX - rect.left
-    val y = e.clientY - rect.top
-    Vec2d(x, y)
-  }
-
   def worldViewOuter(editor: Editor): Widget = {
     import firesword.frp.DynamicList.Implicits.implicitStatic
     import firesword.frp.Frp.implicitConstSome
 
-    val tilesViewDiv = div(
+    val worldViewDiv = div(
       styleClass = MyStyles.worldView,
       children = List(worldView(editor))
     )
 
-    def calculateTargetPoint(e: MouseEvent): Vec2d = {
-      widgetV(tilesViewDiv, e)
-    }
-
-    tilesViewDiv.onMouseDown.listen(e => {
+    worldViewDiv.onMouseDown.listen(e => {
       if (e.button == 2) { // Secondary mouse button
         val cameraState = editor.camera.state.sample()
 
         cameraState match {
           case freeCamera: FreeCamera =>
-            val targetPoint = tilesViewDiv.onMouseMove.hold(e)
-              .map(calculateTargetPoint)
+            val targetPoint = worldViewDiv.onMouseMove.hold(e)
+              .map(worldViewDiv.calculateRelativePosition)
 
             freeCamera.dragCamera(
               targetPoint = targetPoint,
-              stop = tilesViewDiv.onPointerUp.map(_ => ()),
+              stop = worldViewDiv.onPointerUp.map(_ => ()),
             )
           case _ => ()
         }
       }
     })
 
-    tilesViewDiv
+    worldViewDiv
   }
 
   def worldView(editor: Editor): Widget = {
     import Transform._
-
-    //    val tiles = editor.tiles.content.sample()
-    //      .take(1000)
-
 
     val cameraTransform = Cell.map2(
       editor.cameraFocusPoint,
@@ -236,7 +221,7 @@ object WorldView {
 
     theView.onMouseDown.listen(e => {
       if (e.button == 0) {
-        val viewPoint = widgetV(theView, e)
+        val viewPoint = theView.calculateRelativePosition(e)
         val invertedTransform = inversedCameraTransform.sample()
         val initialWorldPoint = invertedTransform.transform(viewPoint)
 
@@ -250,7 +235,7 @@ object WorldView {
 
           val targetWorldPoint = Cell.map2(
             inversedCameraTransform,
-            gesture.clientPos,
+            gesture.clientPos.map(theView.calculateRelativePosition),
             (
               transform: Transform,
               clientPos: Vec2d,
