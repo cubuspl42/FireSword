@@ -40,6 +40,9 @@ object CanvasView {
           canvas.height = h
         }
 
+        // Force redrawing
+//        isDirty = true
+
         if (isDirty) {
 
           val draw = drawFn.sample()

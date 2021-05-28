@@ -41,11 +41,20 @@ object SimpleCell {
       listeners.foreach(h => h(a))
     }
 
-    // TODO: Ownership
     @action
-    def listen(@action h: A => Unit): Unit = {
-      addListener(h)
-      h(sample())
+    def listen(@action h: A => Unit): Unit =
+      listenTill(h, Till.end)
+
+    @action
+    def listenTill(
+                    @action h: A => Unit,
+                    till: Till,
+                  ): Unit = {
+      if (!till.wasReached) {
+        val unsubscribe = addListener(h)
+        till.addListener(unsubscribe)
+        h(sample())
+      }
     }
 
     protected def onStart(): Unit

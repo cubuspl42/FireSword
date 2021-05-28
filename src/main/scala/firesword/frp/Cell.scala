@@ -9,6 +9,7 @@ import firesword.frp.cell.Follow.CellFollowFirst
 import firesword.frp.cell.Map2.CellMap2
 import firesword.frp.cell.Map3.CellMap3
 import firesword.frp.cell.Map4.CellMap4
+import firesword.frp.cell.Map5.CellMap5
 import firesword.frp.cell.SwitchC.CellSwitchC
 
 import scala.concurrent.Future
@@ -29,6 +30,9 @@ object Cell {
     @action
     def listen(@action h: A => Unit): Unit
 
+    @action
+    def listenTill(@action h: A => Unit, till: Till): Unit
+
     @behavior
     def sample(): A
 
@@ -44,6 +48,16 @@ object Cell {
 
   def map4[A, B, C, D, E](ca: Cell[A], cb: Cell[B], cc: Cell[C], cd: Cell[D], f: (A, B, C, D) => E): Cell[E] =
     new CellMap4(ca, cb, cc, cd, f).cached()
+
+  def map5[A, B, C, D, E, Rv](
+                               ca: Cell[A],
+                               cb: Cell[B],
+                               cc: Cell[C],
+                               cd: Cell[D],
+                               ce: Cell[E],
+                               f: (A, B, C, D, E) => Rv,
+                             ): Cell[Rv] =
+    new CellMap5(ca, cb, cc, cd, ce, f).cached()
 
   def followFirst[A](a: A, f: A => EventStream[A]): Cell[A] =
     new CellFollowFirst[A](a, f).cached()

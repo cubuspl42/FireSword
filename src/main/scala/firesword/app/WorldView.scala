@@ -208,12 +208,15 @@ object WorldView {
 
       }
 
-      val drawFn = Cell.map2(
+      val drawFn = Cell.map3(
         cameraTransform,
         objectsDrawFns.content,
+
+        plane.tiles.marker,
         (
           cameraTransform: Transform,
           objectsDrawFns: List[(CanvasRenderingContext2D, Transform) => Unit],
+          tileMarker: Unit,
         ) => (ctx: CanvasRenderingContext2D) => {
           val canvas = ctx.canvas
           canvasSize.set(Vec2d(canvas.width, canvas.height))
@@ -276,7 +279,7 @@ object WorldView {
 
     def handleMouseDownTileMode(e: MouseEvent): Unit = {
       if (e.button == 0) {
-        val gesture = MouseDragGesture.start(theView, e)
+        val gesture = MouseDragGesture.start(theView, e, tillAbort = Till.end)
 
         val targetWorldPoint = Cell.map2(
           inversedCameraTransform,
@@ -287,9 +290,9 @@ object WorldView {
           ) => transform.transform(clientPos)
         )
 
-        targetWorldPoint.listen(twp => {
+        targetWorldPoint.listenTill(twp => {
           editor.drawTileAt(twp)
-        })
+        }, till = gesture.tillEnd)
       }
     }
 

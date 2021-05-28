@@ -3,7 +3,7 @@ package firesword.app.editor
 import firesword.app.Geometry.Vec2d
 import firesword.app.editor.EdObject.EdObject
 import firesword.app.editor.Editor.{Tile, TileCoord}
-import firesword.app.utils.{IntMatrixMap, MutIntMatrixMap}
+import firesword.app.utils.{DynamicIntMatrix, MutDynamicIntMatrix}
 import firesword.frp.DynamicSet
 import firesword.frp.DynamicSet.{DynamicSet, MutDynamicSet}
 import firesword.frp.MutCell.MutCell
@@ -38,13 +38,13 @@ object EdPlane {
 
     val fillColor = new MutCell(wwdPlane.fillColor)
 
-    val _tiles = new MutIntMatrixMap(
+    val _tiles = new MutDynamicIntMatrix(
       width = wwdPlane.tilesWide,
       height = wwdPlane.tilesHigh,
       array = wwdPlane.tiles,
     )
 
-    def tiles: IntMatrixMap = _tiles
+    def tiles: DynamicIntMatrix = _tiles
 
     def setTile(coord: TileCoord, tile: Tile): Unit = {
       _tiles.set(coord.i, coord.j, tile)
