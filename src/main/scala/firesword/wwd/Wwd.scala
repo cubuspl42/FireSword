@@ -8,6 +8,7 @@ import scala.scalajs.js.typedarray.{ArrayBuffer, Int32Array, Uint8Array}
 
 object Wwd {
   case class World(
+                    flags: Int,
                     name: ByteString,
                     author: ByteString,
                     dateCreatedString: ByteString,
@@ -271,6 +272,7 @@ object Wwd {
     val planes = readMainBlock(header, decompressedWwdBuffer)
 
     World(
+      header.flags,
       header.levelName,
       header.author,
       header.birth,

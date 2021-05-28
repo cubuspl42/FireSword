@@ -2,6 +2,8 @@ package firesword.app
 
 import firesword.app.EditObjectDialog.editObjectDialog
 import firesword.app.EditPlaneDialog.editPlaneDialog
+import firesword.app.EditWorldDialog.editWorldDialog
+import firesword.app.editor.Editor
 import firesword.app.editor.Editor.{EditObject, EditPlane, Editor}
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
@@ -19,6 +21,7 @@ object DialogContainer {
 
     val dialogOpt = editor.editContext.map(editContextOpt =>
       editContextOpt.map {
+        case Editor.EditWorld(worldProperties) => editWorldDialog(editor, worldProperties)
         case EditObject(edObject) => editObjectDialog(editor, edObject)
         case EditPlane(edPlane) => editPlaneDialog(editor, edPlane)
       }

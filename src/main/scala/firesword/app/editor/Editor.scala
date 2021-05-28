@@ -12,8 +12,7 @@ import firesword.frp.DynamicList
 import firesword.frp.DynamicList.DynamicList
 import firesword.frp.MutCell.MutCell
 import firesword.scalajsdomext.Fetch.fetchArrayBuffer
-import firesword.wwd.DataStream.ByteString.decode
-import firesword.wwd.Wwd.{World, WwdPlaneFlags, planeNameBufferSize, readWorld}
+import firesword.wwd.Wwd.{World, WwdPlaneFlags, readWorld}
 import org.scalajs.dom.window
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,6 +23,8 @@ import scala.scalajs.js.typedarray.ArrayBuffer
 
 object Editor {
   sealed trait EditContext
+
+  case class EditWorld(worldProperties: WorldProperties) extends EditContext
 
   case class EditObject(edObject: EdObject) extends EditContext
 
@@ -43,6 +44,8 @@ object Editor {
     val tileImageBank = new TileImageBank(rezIndex, levelIndex = levelIndex)
 
     //    val imageSetBank = new ImageSetBank()
+
+    val worldProperties = new WorldProperties(world)
 
     val planes: DynamicList[EdPlane] =
       DynamicList.static(world.planes.map(p => new EdPlane(p)))
@@ -74,11 +77,11 @@ object Editor {
       _activePlane.set(plane)
     }
 
-    val prefixMap = Map(
-      decode(world.prefix1) -> decode(world.imageSet1),
-      decode(world.prefix2) -> decode(world.imageSet2),
-      decode(world.prefix3) -> decode(world.imageSet3),
-      decode(world.prefix4) -> decode(world.imageSet4),
+    def prefixMap = Map(
+      worldProperties.prefix1.sample() -> worldProperties.imageSet1.sample(),
+      worldProperties.prefix2.sample() -> worldProperties.imageSet2.sample(),
+      worldProperties.prefix3.sample() -> worldProperties.imageSet3.sample(),
+      worldProperties.prefix4.sample() -> worldProperties.imageSet4.sample(),
     )
 
     private val _selectedObject = new MutCell[Option[EdObject]](None)
@@ -96,13 +99,17 @@ object Editor {
 
     def editContext: Cell[Option[EditContext]] = _editContext
 
-    def editedObject = editContext.map(_.map {
+    def editedObject: Cell[Option[EdObject]] = editContext.map(_.flatMap({
       case EditObject(edObject) => Some(edObject)
       case _ => None
-    })
+    }))
 
     def editObject(edObject: EdObject): Unit = {
       _editContext.set(Some(EditObject(edObject)))
+    }
+
+    def editWorld(): Unit = {
+      _editContext.set(Some(EditWorld(worldProperties)))
     }
 
     def editActivePlane(): Unit = {
