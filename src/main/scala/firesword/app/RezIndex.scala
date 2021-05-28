@@ -66,6 +66,10 @@ object RezIndex {
       frames.get(i).flatMap(
         pidFilename => textures.get(pidFilename)
       )
+
+    def texturesByIndex: Map[Int, RezTexture] = frames.map {
+      case (i: Int, pidFilename: String) => (i, textures(pidFilename))
+    }
   }
 
   class RezTexture(

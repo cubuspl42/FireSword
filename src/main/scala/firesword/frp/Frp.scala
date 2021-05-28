@@ -20,5 +20,7 @@ object Frp {
 
   implicit def implicitConstSome[A](a: A): Cell[Option[A]] = Const(Some(a))
 
+  implicit def implicitMapSome[A](ca: Cell[A]): Cell[Option[A]] = ca.map(Some(_))
+
   implicit def implicitSome[A](a: A): Option[A] = Some(a)
 }

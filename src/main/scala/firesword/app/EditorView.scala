@@ -31,6 +31,7 @@ object EditorView {
     )
 
     val row: StyleA = style(
+      height(100 %%),
       minHeight(0 px),
       display flex,
       flexDirection row,

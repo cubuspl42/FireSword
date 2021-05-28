@@ -158,10 +158,18 @@ object Editor {
       _editContext.set(None)
     }
 
+    private val _selectedTile = new MutCell[Tile](1)
+
+    def selectedTile: Cell[Tile] = _selectedTile
+
+    def selectTile(tile: Tile): Unit = {
+      _selectedTile.set(tile)
+    }
+
     def drawTileAt(twp: Vec2d): Unit = {
       val currentActivePlane = activePlane.sample()
       val tileCoord = getTileCoordAtPoint(twp)
-      currentActivePlane.setTile(tileCoord, 604)
+      currentActivePlane.setTile(tileCoord, selectedTile.sample())
     }
 
     val _zoom = new MutCell(1.0)
