@@ -4,7 +4,7 @@ import firesword.app.Geometry.Vec2d
 import firesword.app.editor.EdObject.EdObject
 import firesword.app.utils.IntMatrixMap
 import firesword.frp.DynamicSet
-import firesword.frp.DynamicSet.DynamicSet
+import firesword.frp.DynamicSet.{DynamicSet, MutDynamicSet}
 import firesword.frp.MutCell.MutCell
 import firesword.wwd.Wwd.{Plane, WwdPlaneFlags}
 
@@ -43,13 +43,19 @@ object EdPlane {
       array = wwdPlane.tiles,
     )
 
-    val objects: DynamicSet[EdObject] = DynamicSet.of(
+   private val _objects = new MutDynamicSet(
       wwdPlane.objects
         .map(wwdObject => new EdObject(
           wwdObject = wwdObject,
           initialPosition = Vec2d(wwdObject.x, wwdObject.y),
         )).toSet
     )
+
+    def objects: DynamicSet[EdObject] = _objects
+
+    def deleteObject(edObject: EdObject): Unit = {
+      _objects.remove(edObject)
+    }
 
     def findClosestObject(p: Vec2d): EdObject =
       objects.content.sample().minBy(obj => (obj.position.sample() - p).length)

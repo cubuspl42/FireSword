@@ -43,8 +43,6 @@ object Editor {
               ) {
     val tileImageBank = new TileImageBank(rezIndex, levelIndex = levelIndex)
 
-    //    val imageSetBank = new ImageSetBank()
-
     val worldProperties = new WorldProperties(world)
 
     val planes: DynamicList[EdPlane] =
@@ -94,6 +92,15 @@ object Editor {
     }
 
     def selectedObject: Cell[Option[EdObject]] = _selectedObject
+
+    def deleteSelectedObject(): Unit = {
+      val currentSelectedObjectOpt = selectedObject.sample()
+      val currentActivePlane = activePlane.sample()
+
+      currentSelectedObjectOpt.foreach(currentSelectedObject => {
+        currentActivePlane.deleteObject(currentSelectedObject)
+      })
+    }
 
     private val _editContext = new MutCell[Option[EditContext]](None)
 

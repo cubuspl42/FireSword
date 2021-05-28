@@ -1,8 +1,11 @@
 package firesword.frp
 
+import firesword.app.editor.EdObject
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicList.DynamicList
 import firesword.frp.MutCell.MutCell
+
+import scala.collection.mutable
 
 object DynamicSet {
   abstract class DynamicSet[A] {
@@ -29,6 +32,7 @@ object DynamicSet {
     new MutDynamicSet[A](content)
 
   class MutDynamicSet[A](initialContent: Set[A]) extends DynamicSet[A] {
+
     private val _content = new MutCell(initialContent)
 
     override val content: Cell[Set[A]] = _content
@@ -36,6 +40,11 @@ object DynamicSet {
     def put(value: A): Unit = {
       val oldContent = _content.sample()
       _content.set(oldContent + value)
+    }
+
+    def remove(value: A): Unit = {
+      val oldContent = _content.sample()
+      _content.set(oldContent - value)
     }
   }
 }

@@ -56,6 +56,12 @@ object EditorView {
     })
 
 
+    val deleteObjectButton = button("Delete object")
+
+    deleteObjectButton.onPressed.listen(_ => {
+      editor.deleteSelectedObject()
+    })
+
     val worldPropertiesButton = button("World properties...")
 
     worldPropertiesButton.onPressed.listen(_ => {
@@ -81,6 +87,7 @@ object EditorView {
     val toolBar = div(
       styleClass = MyStyles.toolBar,
       children = List(
+        deleteObjectButton,
         worldPropertiesButton,
         planePropertiesButton,
         planeSelect,
