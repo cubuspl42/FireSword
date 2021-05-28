@@ -54,6 +54,8 @@ object MyStyles extends StyleSheet.Inline {
   val toolBar: StyleA = style(
     display flex,
     flexDirection row,
+    gap(8 px),
+
     backgroundColor(c"#77777b"),
     height(32 px),
     justifyContent flexEnd,
@@ -87,6 +89,18 @@ object MyStyles extends StyleSheet.Inline {
   )
 
   val editObjectDialogWrapper: StyleA = style(
+    position absolute,
+    width(100 %%),
+    height(100 %%),
+
+    pointerEvents none,
+    display flex,
+    flexDirection column,
+    alignItems center,
+    justifyContent center,
+  )
+
+  val dialogContainer: StyleA = style(
     position absolute,
     width(100 %%),
     height(100 %%),

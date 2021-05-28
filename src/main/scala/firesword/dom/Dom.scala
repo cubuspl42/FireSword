@@ -98,6 +98,15 @@ object Dom {
     override protected def parseString(s: String): String = s
   }
 
+  class Checkbox(element: HTMLInputElement) extends Widget(element) {
+    lazy val isChecked: Cell[Boolean] = {
+      val onChange = elementEventStream[Event](element, "change")
+
+      onChange.map(e => element.checked)
+        .hold(element.checked)
+    }
+  }
+
   class Button(val element: HTMLButtonElement) extends Widget(element) {
     lazy val onPressed: EventStream[MouseEvent] =
       elementEventStream[MouseEvent](node, "click")
@@ -221,6 +230,14 @@ object Dom {
       element.setAttribute("value", initialValue)
 
       new TextInput(element)
+    }
+
+    def checkbox(initialChecked: Boolean): Checkbox = {
+      val element = document.createElement("input").asInstanceOf[HTMLInputElement]
+      element.setAttribute("type", "checkbox");
+      element.checked = initialChecked
+
+      new Checkbox(element)
     }
 
     def button(

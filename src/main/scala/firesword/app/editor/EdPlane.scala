@@ -5,12 +5,38 @@ import firesword.app.editor.EdObject.EdObject
 import firesword.app.utils.IntMatrixMap
 import firesword.frp.DynamicSet
 import firesword.frp.DynamicSet.DynamicSet
-import firesword.wwd.Wwd.{Plane, World, WwdPlaneFlags}
+import firesword.frp.MutCell.MutCell
+import firesword.wwd.Wwd.{Plane, WwdPlaneFlags}
 
 object EdPlane {
   class EdPlane(
                  val wwdPlane: Plane,
                ) {
+    private def flagMutCell(flag: Int) =
+      new MutCell((wwdPlane.flags & flag) != 0)
+
+    val mainPlane: MutCell[Boolean] = flagMutCell(WwdPlaneFlags.MAIN_PLANE)
+
+    val noDraw: MutCell[Boolean] = flagMutCell(WwdPlaneFlags.NO_DRAW)
+
+    val xWrapping: MutCell[Boolean] = flagMutCell(WwdPlaneFlags.X_WRAPPING)
+
+    val yWrapping: MutCell[Boolean] = flagMutCell(WwdPlaneFlags.Y_WRAPPING)
+
+    val autoTileSize: MutCell[Boolean] = flagMutCell(WwdPlaneFlags.AUTO_TILE_SIZE)
+
+    val name = new MutCell(wwdPlane.name.decode())
+
+    val tileWidth = new MutCell(wwdPlane.tileWidth)
+
+    val tileHeight = new MutCell(wwdPlane.tileWidth)
+
+    val movementXPercent = new MutCell(wwdPlane.movementXPercent)
+
+    val movementYPercent = new MutCell(wwdPlane.movementYPercent)
+
+    val fillColor = new MutCell(wwdPlane.fillColor)
+
     val tiles = new IntMatrixMap(
       width = wwdPlane.tilesWide,
       height = wwdPlane.tilesHigh,
@@ -28,12 +54,10 @@ object EdPlane {
     def findClosestObject(p: Vec2d): EdObject =
       objects.content.sample().minBy(obj => (obj.position.sample() - p).length)
 
-    def name = wwdPlane.name.decode()
-
     def imageSets: List[String] = wwdPlane.imageSets.map(_.decode())
 
     // TODO: Figure out the algorithm
-    def primaryImageSet = imageSets.head
+    def primaryImageSet: String = imageSets.head
 
     private var _savedCameraFocusPoint = Vec2d(0, 0)
 

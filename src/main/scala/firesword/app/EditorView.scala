@@ -55,10 +55,16 @@ object EditorView {
       }
     })
 
+    val planePropertiesButton = button("Plane properties...")
+
+    planePropertiesButton.onPressed.listen(_ => {
+      editor.editActivePlane()
+    })
+
     val planeSelect = select[EdPlane](
       editor.planes,
       editor.activePlane.sample(),
-      _.name,
+      _.name.sample(), // TODO: React
     )
 
     planeSelect.value.listen(p => {
@@ -68,7 +74,8 @@ object EditorView {
     val toolBar = div(
       styleClass = MyStyles.toolBar,
       children = List(
-        planeSelect
+        planePropertiesButton,
+        planeSelect,
       ),
     )
 

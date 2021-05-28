@@ -23,7 +23,11 @@ import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 
 object Editor {
+  sealed trait EditContext
 
+  case class EditObject(edObject: EdObject) extends EditContext
+
+  case class EditPlane(edPlane: EdPlane) extends EditContext
 
   private val tileSize = 64
 
@@ -88,16 +92,26 @@ object Editor {
 
     def selectedObject: Cell[Option[EdObject]] = _selectedObject
 
-    private val _editedObject = new MutCell[Option[EdObject]](None)
+    private val _editContext = new MutCell[Option[EditContext]](None)
 
-    def editedObject: Cell[Option[EdObject]] = _editedObject
+    def editContext: Cell[Option[EditContext]] = _editContext
+
+    def editedObject = editContext.map(_.map {
+      case EditObject(edObject) => Some(edObject)
+      case _ => None
+    })
 
     def editObject(edObject: EdObject): Unit = {
-      _editedObject.set(Some(edObject))
+      _editContext.set(Some(EditObject(edObject)))
     }
 
-    def stopEditObject(): Unit = {
-      _editedObject.set(None)
+    def editActivePlane(): Unit = {
+      val currentActivePlane = activePlane.sample()
+      _editContext.set(Some(EditPlane(currentActivePlane)))
+    }
+
+    def stopEditing(): Unit = {
+      _editContext.set(None)
     }
 
     val _zoom = new MutCell(1.0)

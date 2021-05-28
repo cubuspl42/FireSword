@@ -2,12 +2,10 @@ package firesword.app
 
 import firesword.app.editor.EdObject.EdObject
 import firesword.app.editor.Editor.Editor
-import firesword.dom.Dom.Tag.{button, div, integerInput, span, textInput}
-import firesword.dom.Dom.{Input, IntegerInput, Widget}
+import firesword.dom.Dom.Tag._
+import firesword.dom.Dom.{Input, Widget}
 import firesword.frp.Cell.Cell
 import firesword.frp.MutCell.MutCell
-import org.scalajs.dom.document
-import org.scalajs.dom.raw.HTMLInputElement
 
 
 object EditObjectDialog {
@@ -26,7 +24,7 @@ object EditObjectDialog {
     input.value.listen(set)
 
     List(
-      span(s"${label}: "),
+      span(s"$label: "),
       input,
     )
   }
@@ -61,8 +59,6 @@ object EditObjectDialog {
                         edObject: EdObject,
                       ): Widget = {
     import firesword.frp.DynamicList.Implicits.implicitStaticSingleton
-    //    val input = document.createElement("input")
-    //      .asInstanceOf[HTMLInputElement]
 
 
     def column(children: List[Widget]): Widget = {
@@ -79,80 +75,75 @@ object EditObjectDialog {
 
     val saveButton = button("Save")
 
-    saveButton.onPressed.listen(_ => editor.stopEditObject())
+    saveButton.onPressed.listen(_ => editor.stopEditing())
 
     div(
-      styleClass = MyStyles.editObjectDialogWrapper,
+      styleClass = MyStyles.editObjectDialog,
       children = List(
         div(
-          styleClass = MyStyles.editObjectDialog,
+          styleClass = MyStyles.editObjectDialogRow,
           children = List(
-            div(
-              styleClass = MyStyles.editObjectDialogRow,
-              children = List(
-                column(List(
+            column(List(
 
-                  labeledIntegerInput("id", edObject.id),
+              labeledIntegerInput("id", edObject.id),
 
-                  labeledTextInput("name", edObject.name),
-                  labeledTextInput("logic", edObject.logic),
-                  labeledTextInput("imageSet", edObject.imageSet),
-                  labeledTextInput("animation", edObject.animation),
+              labeledTextInput("name", edObject.name),
+              labeledTextInput("logic", edObject.logic),
+              labeledTextInput("imageSet", edObject.imageSet),
+              labeledTextInput("animation", edObject.animation),
 
-                  _labeledIntegerInput("x", edObject.x, edObject.setX),
-                  _labeledIntegerInput("y", edObject.y, edObject.setY),
-                  labeledIntegerInput("z", edObject.z),
-                  labeledIntegerInput("i", edObject.i),
-                  labeledIntegerInput("addFlags", edObject.addFlags),
-                  labeledIntegerInput("dynamicFlags", edObject.dynamicFlags),
-                  labeledIntegerInput("drawFlags", edObject.drawFlags),
-                  labeledIntegerInput("userFlags", edObject.userFlags),
-                  labeledIntegerInput("score", edObject.score),
-                  labeledIntegerInput("points", edObject.points),
-                  labeledIntegerInput("powerUp", edObject.powerUp),
-                  labeledIntegerInput("damage", edObject.damage),
-                  labeledIntegerInput("smarts", edObject.smarts),
-                  labeledIntegerInput("health", edObject.health),
-                  labeledIntegerInput("userValue1", edObject.userValue1),
-                  labeledIntegerInput("userValue2", edObject.userValue2),
-                  labeledIntegerInput("userValue3", edObject.userValue3),
-                  labeledIntegerInput("userValue4", edObject.userValue4),
-                  labeledIntegerInput("userValue5", edObject.userValue5),
-                  labeledIntegerInput("userValue6", edObject.userValue6),
-                  labeledIntegerInput("userValue7", edObject.userValue7),
-                  labeledIntegerInput("userValue8", edObject.userValue8),
-                ).flatten),
-                column(List(
-                  labeledIntegerInput("xMin", edObject.xMin),
-                  labeledIntegerInput("yMin", edObject.yMin),
-                  labeledIntegerInput("xMax", edObject.xMax),
-                  labeledIntegerInput("yMax", edObject.yMax),
-                  labeledIntegerInput("speedX", edObject.speedX),
-                  labeledIntegerInput("speedY", edObject.speedY),
-                  labeledIntegerInput("xTweak", edObject.xTweak),
-                  labeledIntegerInput("yTweak", edObject.yTweak),
-                  labeledIntegerInput("counter", edObject.counter),
-                  labeledIntegerInput("speed", edObject.speed),
-                  labeledIntegerInput("width", edObject.width),
-                  labeledIntegerInput("height", edObject.height),
-                  labeledIntegerInput("direction", edObject.direction),
-                  labeledIntegerInput("faceDir", edObject.faceDir),
-                  labeledIntegerInput("timeDelay", edObject.timeDelay),
-                  labeledIntegerInput("frameDelay", edObject.frameDelay),
-                  labeledIntegerInput("objectType", edObject.objectType),
-                  labeledIntegerInput("hitTypeFlags", edObject.hitTypeFlags),
-                  labeledIntegerInput("xMoveRes", edObject.xMoveRes),
-                  labeledIntegerInput("yMoveRes", edObject.yMoveRes),
-                ).flatten),
-              ),
-            ),
-            div(
-              inlineStyle = "align-self: center",
-              children = saveButton,
-            ),
-          )
+              _labeledIntegerInput("x", edObject.x, edObject.setX),
+              _labeledIntegerInput("y", edObject.y, edObject.setY),
+              labeledIntegerInput("z", edObject.z),
+              labeledIntegerInput("i", edObject.i),
+              labeledIntegerInput("addFlags", edObject.addFlags),
+              labeledIntegerInput("dynamicFlags", edObject.dynamicFlags),
+              labeledIntegerInput("drawFlags", edObject.drawFlags),
+              labeledIntegerInput("userFlags", edObject.userFlags),
+              labeledIntegerInput("score", edObject.score),
+              labeledIntegerInput("points", edObject.points),
+              labeledIntegerInput("powerUp", edObject.powerUp),
+              labeledIntegerInput("damage", edObject.damage),
+              labeledIntegerInput("smarts", edObject.smarts),
+              labeledIntegerInput("health", edObject.health),
+              labeledIntegerInput("userValue1", edObject.userValue1),
+              labeledIntegerInput("userValue2", edObject.userValue2),
+              labeledIntegerInput("userValue3", edObject.userValue3),
+              labeledIntegerInput("userValue4", edObject.userValue4),
+              labeledIntegerInput("userValue5", edObject.userValue5),
+              labeledIntegerInput("userValue6", edObject.userValue6),
+              labeledIntegerInput("userValue7", edObject.userValue7),
+              labeledIntegerInput("userValue8", edObject.userValue8),
+            ).flatten),
+            column(List(
+              labeledIntegerInput("xMin", edObject.xMin),
+              labeledIntegerInput("yMin", edObject.yMin),
+              labeledIntegerInput("xMax", edObject.xMax),
+              labeledIntegerInput("yMax", edObject.yMax),
+              labeledIntegerInput("speedX", edObject.speedX),
+              labeledIntegerInput("speedY", edObject.speedY),
+              labeledIntegerInput("xTweak", edObject.xTweak),
+              labeledIntegerInput("yTweak", edObject.yTweak),
+              labeledIntegerInput("counter", edObject.counter),
+              labeledIntegerInput("speed", edObject.speed),
+              labeledIntegerInput("width", edObject.width),
+              labeledIntegerInput("height", edObject.height),
+              labeledIntegerInput("direction", edObject.direction),
+              labeledIntegerInput("faceDir", edObject.faceDir),
+              labeledIntegerInput("timeDelay", edObject.timeDelay),
+              labeledIntegerInput("frameDelay", edObject.frameDelay),
+              labeledIntegerInput("objectType", edObject.objectType),
+              labeledIntegerInput("hitTypeFlags", edObject.hitTypeFlags),
+              labeledIntegerInput("xMoveRes", edObject.xMoveRes),
+              labeledIntegerInput("yMoveRes", edObject.yMoveRes),
+            ).flatten),
+          ),
         ),
-      ),
+        div(
+          inlineStyle = "align-self: center",
+          children = saveButton,
+        ),
+      )
     )
   }
 }
