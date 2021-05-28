@@ -6,6 +6,7 @@ import firesword.app.editor.EdObject.EdObject
 import firesword.app.editor.EdPlane.EdPlane
 import firesword.app.editor.Editor.Editor
 import firesword.app.Geometry.Vec2d
+import firesword.app.editor.Editor.Mode.{ObjectMode, TileMode}
 import firesword.app.utils.CanvasRenderingContext2DUtils.strokeRoundedRect
 import firesword.app.utils.IterableExt.implicitIterableExt
 import firesword.dom.Dom.Tag.div
@@ -231,7 +232,7 @@ object WorldView {
 
     val theView = canvasView(drawFn)
 
-    theView.onMouseDown.listen(e => {
+    def handleMouseDownObjectMode(e: MouseEvent): Unit = {
       if (e.button == 0) {
         val viewPoint = theView.calculateRelativePosition(e)
         val invertedTransform = inversedCameraTransform.sample()
@@ -270,6 +271,34 @@ object WorldView {
 
       if (e.button == 1) {
         editor.selectedObject.sample().foreach(editor.editObject)
+      }
+    }
+
+    def handleMouseDownTileMode(e: MouseEvent): Unit = {
+      if (e.button == 0) {
+        val gesture = MouseDragGesture.start(theView, e)
+
+        val targetWorldPoint = Cell.map2(
+          inversedCameraTransform,
+          gesture.clientPos.map(theView.calculateRelativePosition),
+          (
+            transform: Transform,
+            clientPos: Vec2d,
+          ) => transform.transform(clientPos)
+        )
+
+        targetWorldPoint.listen(twp => {
+          editor.drawTileAt(twp)
+        })
+      }
+    }
+
+    theView.onMouseDown.listen(e => {
+      editor.mode.sample() match {
+        case ObjectMode =>
+          handleMouseDownObjectMode(e)
+        case TileMode =>
+          handleMouseDownTileMode(e)
       }
     })
 

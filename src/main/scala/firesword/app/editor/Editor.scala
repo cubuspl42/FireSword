@@ -7,6 +7,8 @@ import firesword.app.RezIndex.RezIndex
 import firesword.app.TileImageBank.TileImageBank
 import firesword.app.editor.EdObject.EdObject
 import firesword.app.editor.EdPlane.EdPlane
+import firesword.app.editor.Editor.Mode
+import firesword.app.editor.Editor.Mode.{Mode, TileMode}
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicList
 import firesword.frp.DynamicList.DynamicList
@@ -22,6 +24,11 @@ import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 
 object Editor {
+  object Mode extends Enumeration {
+    type Mode = Value
+    val ObjectMode, TileMode = Value
+  }
+
   sealed trait EditContext
 
   case class EditWorld(worldProperties: WorldProperties) extends EditContext
@@ -29,6 +36,10 @@ object Editor {
   case class EditObject(edObject: EdObject) extends EditContext
 
   case class EditPlane(edPlane: EdPlane) extends EditContext
+
+  class DrawContext {
+
+  }
 
   private val tileSize = 64
 
@@ -41,7 +52,16 @@ object Editor {
                 val rezIndex: RezIndex,
                 levelIndex: Int,
               ) {
+
     val tileImageBank = new TileImageBank(rezIndex, levelIndex = levelIndex)
+
+    val _mode = new MutCell(TileMode)
+
+    def mode: Cell[Mode.Value] = _mode
+
+    def enterMode(newMode: Mode): Unit = {
+      _mode.set(newMode)
+    }
 
     val worldProperties = new WorldProperties(world)
 
@@ -138,6 +158,12 @@ object Editor {
       _editContext.set(None)
     }
 
+    def drawTileAt(twp: Vec2d): Unit = {
+      val currentActivePlane = activePlane.sample()
+      val tileCoord = getTileCoordAtPoint(twp)
+      currentActivePlane.setTile(tileCoord, 604)
+    }
+
     val _zoom = new MutCell(1.0)
 
     val cameraZoom: Cell[Double] = _zoom
@@ -156,11 +182,14 @@ object Editor {
     // FIXME
     cameraFocusPoint.listen(_ => {})
 
-    def getTileCoordAtPoint(x: Double, y: Double): TileCoord =
+    def getTileCoordAtPoint(p: Vec2d): TileCoord =
       TileCoord(
-        (y / tileSize).toInt,
-        (x / tileSize).toInt,
+        (p.y / tileSize).toInt,
+        (p.x / tileSize).toInt,
       )
+
+    def getTileCoordAtPoint(x: Double, y: Double): TileCoord =
+      getTileCoordAtPoint(Vec2d(x, y))
   }
 
   def delay(milliseconds: Int): Future[Unit] = {
