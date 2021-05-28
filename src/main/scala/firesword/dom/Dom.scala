@@ -18,7 +18,7 @@ object Dom {
     element.innerHTML = ""
   }
 
-  private def elementEventStream[E <: Event](element: Element, eventType: String): EventStream[E] =
+  private def elementEventStream[E <: Event](element: Node, eventType: String): EventStream[E] =
     new SourceEventStream[E](listener_ => {
       element.addEventListener(eventType, listener_)
       () => element.removeEventListener(eventType, listener_)

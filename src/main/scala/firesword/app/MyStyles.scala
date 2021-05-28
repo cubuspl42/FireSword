@@ -57,7 +57,7 @@ object MyStyles extends StyleSheet.Inline {
     gap(8 px),
 
     backgroundColor(c"#77777b"),
-    height(32 px),
+    minHeight(32 px),
     justifyContent flexEnd,
     alignItems center,
     paddingLeft(8 px),
@@ -74,11 +74,9 @@ object MyStyles extends StyleSheet.Inline {
   )
 
   val worldViewStack: StyleA = style(
+    flexGrow(1),
     position relative,
-    width(100 %%),
-    height(100 %%),
   )
-
 
   val worldView: StyleA = style(
     position absolute,

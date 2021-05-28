@@ -4,18 +4,39 @@ import firesword.app.Camera.FreeCamera
 import firesword.app.editor.EdPlane.EdPlane
 import firesword.app.editor.Editor.Editor
 import firesword.app.Geometry.Vec2d
+import firesword.app.TileModeSidebar.tileModeSidebar
 import firesword.app.WorldViewStack.worldViewStack
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.{Widget, widgetList}
 import firesword.frp.DynamicList
 import firesword.frp.Frp
-import firesword.wwd.Wwd.Plane
 import org.scalajs.dom._
 import org.scalajs.dom.ext.KeyValue
+import scalacss.DevDefaults.StyleA
+import scalacss.DevDefaults._
 
-import scala.language.implicitConversions
+import scala.language.postfixOps
 
 object EditorView {
+  object Styles extends StyleSheet.Inline {
+
+    import dsl._
+
+    val root: StyleA = style(
+      width(100 %%),
+      height(100 %%),
+
+      display flex,
+      flexDirection column,
+    )
+
+    val row: StyleA = style(
+      minHeight(0 px),
+      display flex,
+      flexDirection row,
+    )
+  }
+
   def editorView(editor: Editor): Widget = {
     import Frp.{implicitConst, implicitConstSome}
     import DynamicList.Implicits.implicitStatic
@@ -102,10 +123,17 @@ object EditorView {
 
     val theDiv = {
       div(
-        styleClass = MyStyles.editorView,
+        styleClass = Styles.root,
+        //        styleClass = MyStyles.editorView,
         children = widgetList(
           toolBar,
-          worldViewStack(editor),
+          div(
+            styleClass = Styles.row,
+            children = widgetList(
+              tileModeSidebar(editor),
+              worldViewStack(editor),
+            ),
+          )
         ),
       )
     }

@@ -23,7 +23,10 @@ object FireSwordApp {
 
     val style = document.createElement("style")
     style.setAttribute("type", "text/css")
-    style.appendChild(document.createTextNode(MyStyles.render))
+
+    style.appendChild(document.createTextNode(
+      AllStyles.allStyles.map(s => s.render[String]).mkString("\n")
+    ))
 
     document.head.appendChild(style)
   }
