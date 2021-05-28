@@ -4,13 +4,14 @@ import firesword.frp.EventStream.EventStream
 import firesword.frp.Frp.Unsubscribe
 import firesword.frp.SimpleCell.SimpleCell
 import firesword.frp.SimpleEventStream.SimpleEventStream
+import firesword.frp.Till
 
 object Hold {
-  // TODO: Opt-out
   class StreamHold[A](
-                     initialValue: A,
-                     steps: EventStream[A]
-                   ) extends SimpleCell[A] {
+                       initialValue: A,
+                       steps: EventStream[A],
+                       till: Till,
+                     ) extends SimpleCell[A] {
     private var _currentValue = initialValue
 
     override protected def onStart(): Unit = {
@@ -21,10 +22,13 @@ object Hold {
 
     override def sample(): A = _currentValue
 
-    // TODO: Remove listener
-    steps.addListener(a => {
-      _currentValue = a
-      notifyListeners(a)
-    })
+    if (!till.wasReached) {
+      val unsubscribe = steps.addListener(a => {
+        _currentValue = a
+        notifyListeners(a)
+      })
+
+      till.addListener(unsubscribe)
+    }
   }
 }

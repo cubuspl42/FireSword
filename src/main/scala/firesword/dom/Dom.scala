@@ -2,7 +2,7 @@ package firesword.dom
 
 import firesword.app.Geometry.Vec2d
 import firesword.frp.Cell.Cell
-import firesword.frp.DynamicList
+import firesword.frp.{DynamicList, Till}
 import firesword.frp.DynamicList.DynamicList
 import firesword.frp.EventStream.EventStream
 import firesword.frp.Frp.Const
@@ -26,18 +26,23 @@ object Dom {
 
   class MouseDragGesture(
                           val clientPos: Cell[Vec2d],
-                          val onStop: EventStream[Unit],
+                          val tillEnd: Till,
                         )
 
   object MouseDragGesture {
-    def start(element: Widget, event: MouseEvent): MouseDragGesture = {
-      val clientPos = element.onMouseMove.hold(event)
+    def start(
+               element: Widget,
+               event: MouseEvent,
+               tillAbort: Till,
+             ): MouseDragGesture = {
+      val tillEnd = element.onPointerUp.tillNext(tillAbort)
+
+      val clientPos = element.onMouseMove.holdTill(event, tillEnd)
         .map(e => Vec2d(e.clientX, e.clientY))
-      val onStop = element.onPointerUp.map(_ => ())
 
       new MouseDragGesture(
         clientPos = clientPos,
-        onStop = onStop,
+        tillEnd = tillEnd,
       )
     }
   }

@@ -10,7 +10,7 @@ import firesword.app.utils.CanvasRenderingContext2DUtils.strokeRoundedRect
 import firesword.app.utils.IterableExt.implicitIterableExt
 import firesword.dom.Dom.Tag.div
 import firesword.dom.Dom.{MouseDragGesture, Widget}
-import firesword.frp.{Cell, MutCell}
+import firesword.frp.{Cell, MutCell, Till}
 import firesword.frp.Cell.Cell
 import firesword.frp.MutCell.MutCell
 import firesword.wwd.Wwd.DrawFlags
@@ -243,7 +243,11 @@ object WorldView {
         val isSelected = editor.selectedObject.sample().contains(obj)
 
         if (isSelected) {
-          val gesture = MouseDragGesture.start(theView, e)
+          val gesture = MouseDragGesture.start(
+            element = theView,
+            event = e,
+            tillAbort = Till.end,
+          )
 
           val targetWorldPoint = Cell.map2(
             inversedCameraTransform,
@@ -258,7 +262,7 @@ object WorldView {
             twp - initialWorldPoint
           })
 
-          obj.move(delta = delta, commit = gesture.onStop)
+          obj.move(delta = delta, commit = gesture.tillEnd.on)
         } else {
           editor.selectObject(obj)
         }
