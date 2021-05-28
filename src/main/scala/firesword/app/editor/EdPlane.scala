@@ -57,6 +57,10 @@ object EdPlane {
       _objects.remove(edObject)
     }
 
+    def addObject(edObject: EdObject): Unit = {
+      _objects.put(edObject)
+    }
+
     def findClosestObject(p: Vec2d): EdObject =
       objects.content.sample().minBy(obj => (obj.position.sample() - p).length)
 

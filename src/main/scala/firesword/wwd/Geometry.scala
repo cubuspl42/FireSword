@@ -63,6 +63,8 @@ object Geometry {
   }
 
   object Rectangle {
+    def zero: Rectangle = Rectangle(Vec2(0, 0), Vec2(0, 0))
+
     def fromCenter(center: Vec2, size: Vec2): Rectangle = {
       val size_ = size.abs()
       new Rectangle(size_.neg() / 2, size_)

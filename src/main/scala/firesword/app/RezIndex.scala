@@ -112,7 +112,9 @@ object RezIndex {
       val rezIndexJson = rezIndexJsonAny.asInstanceOf[Json.Root]
       val imageSetsMap = rezIndexJson.imageSets.toMap.filter({
         case (fqImageSetId: String, _) =>
-          fqImageSetId.startsWith("GAME_") || fqImageSetId.startsWith(s"LEVEL${levelIndex}_")
+          fqImageSetId.startsWith("CLAW_") ||
+            fqImageSetId.startsWith("GAME_") ||
+            fqImageSetId.startsWith(s"LEVEL${levelIndex}_")
       })
 
       imageSetsMap.traverse({

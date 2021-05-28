@@ -12,7 +12,7 @@ import firesword.frp.DynamicList
 import firesword.frp.DynamicList.DynamicList
 import firesword.frp.MutCell.MutCell
 import firesword.scalajsdomext.Fetch.fetchArrayBuffer
-import firesword.wwd.Wwd.{World, WwdPlaneFlags, readWorld}
+import firesword.wwd.Wwd.{Object_, World, WwdPlaneFlags, readWorld}
 import org.scalajs.dom.window
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -100,6 +100,16 @@ object Editor {
       currentSelectedObjectOpt.foreach(currentSelectedObject => {
         currentActivePlane.deleteObject(currentSelectedObject)
       })
+    }
+
+    def insertObject(): Unit = {
+      val currentActivePlane = activePlane.sample()
+      val currentCameraFocusPoint = cameraFocusPoint.sample()
+
+      currentActivePlane.addObject(new EdObject(
+        Object_.empty,
+        initialPosition = currentCameraFocusPoint,
+      ))
     }
 
     private val _editContext = new MutCell[Option[EditContext]](None)

@@ -10,8 +10,9 @@ import firesword.app.utils.CanvasRenderingContext2DUtils.strokeRoundedRect
 import firesword.app.utils.IterableExt.implicitIterableExt
 import firesword.dom.Dom.Tag.div
 import firesword.dom.Dom.{MouseDragGesture, Widget}
-import firesword.frp.Cell
+import firesword.frp.{Cell, MutCell}
 import firesword.frp.Cell.Cell
+import firesword.frp.MutCell.MutCell
 import firesword.wwd.Wwd.DrawFlags
 import org.scalajs.dom._
 
@@ -51,12 +52,14 @@ object WorldView {
   def worldView(editor: Editor): Widget = {
     import Transform._
 
-    val cameraTransform = Cell.map2(
+    val canvasSize = new MutCell(Vec2d.zero)
+
+    val cameraTransform = Cell.map3(
       editor.cameraFocusPoint,
       editor.cameraZoom,
-      (fp: Vec2d, z: Double) => {
-        //  translate(canvasSize / 2) *
-        scale(z) * translate(fp * -1)
+      canvasSize,
+      (fp: Vec2d, z: Double, canvasSize: Vec2d) => {
+        translate(canvasSize / 2) * scale(z) * translate(fp * -1)
       },
     )
 
@@ -94,8 +97,14 @@ object WorldView {
         fqImageSetId => editor.rezIndex.getImageSet(fqImageSetId)
       )
 
+      def placeholderTexture() =
+        editor.rezIndex.getImageSet("CLAW_IMAGES_RACER")
+          .flatMap(imageSet => imageSet.getTexture(-1))
+
       val i = obj.wwdObject.i
+
       val textureOpt = imageSetOpt.flatMap(imageSet => imageSet.getTexture(i))
+        .orElse(placeholderTexture())
 
       textureOpt.foreach(texture => {
         val image = texture.htmlImage
@@ -205,6 +214,9 @@ object WorldView {
           cameraTransform: Transform,
           objectsDrawFns: List[(CanvasRenderingContext2D, Transform) => Unit],
         ) => (ctx: CanvasRenderingContext2D) => {
+          val canvas = ctx.canvas
+          canvasSize.set(Vec2d(canvas.width, canvas.height))
+
           drawTiles(ctx, cameraTransform)
           objectsDrawFns.foreach(drawFn => drawFn(ctx, cameraTransform))
         }

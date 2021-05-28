@@ -16,4 +16,8 @@ object Geometry {
     def -(that: Vec2d): Vec2d =
       Vec2d(x - that.x, y - that.y)
   }
+
+  object Vec2d {
+    def zero: Vec2d = Vec2d(0, 0)
+  }
 }
