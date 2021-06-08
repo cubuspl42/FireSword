@@ -8,7 +8,7 @@ import firesword.app.TileImageBank.TileImageBank
 import firesword.app.editor.EdObject.EdObject
 import firesword.app.editor.EdPlane.EdPlane
 import firesword.app.editor.Editor.Mode
-import firesword.app.editor.Editor.Mode.{Mode, TileMode}
+import firesword.app.editor.Editor.Mode.{Mode, ObjectMode, TileMode}
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicList
 import firesword.frp.DynamicList.DynamicList
@@ -55,7 +55,7 @@ object Editor {
 
     val tileImageBank = new TileImageBank(rezIndex, levelIndex = levelIndex)
 
-    val _mode = new MutCell(TileMode)
+    val _mode = new MutCell(ObjectMode)
 
     def mode: Cell[Mode.Value] = _mode
 

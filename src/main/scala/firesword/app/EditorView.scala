@@ -6,6 +6,7 @@ import firesword.app.editor.Editor.Editor
 import firesword.app.Geometry.Vec2d
 import firesword.app.TileModeSidebar.tileModeSidebar
 import firesword.app.WorldViewStack.worldViewStack
+import firesword.app.editor.Editor.Mode.{ObjectMode, TileMode}
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.{Widget, widgetList}
 import firesword.frp.DynamicList
@@ -77,6 +78,18 @@ object EditorView {
       }
     })
 
+    val objectModeButton = button("Object mode")
+
+    objectModeButton.onPressed.listen(_ => {
+      editor.enterMode(ObjectMode)
+    })
+
+    val tileModeButton = button("Tile mode")
+
+    tileModeButton.onPressed.listen(_ => {
+      editor.enterMode(TileMode)
+    })
+
     val insertObjectButton = button("Insert object")
 
     insertObjectButton.onPressed.listen(_ => {
@@ -114,6 +127,8 @@ object EditorView {
     val toolBar = div(
       styleClass = MyStyles.toolBar,
       children = List(
+        tileModeButton,
+        objectModeButton,
         insertObjectButton,
         deleteObjectButton,
         worldPropertiesButton,
@@ -131,7 +146,9 @@ object EditorView {
           div(
             styleClass = Styles.row,
             children = widgetList(
-              tileModeSidebar(editor),
+              editor.mode.map(m =>
+                Option.when(m == TileMode)(tileModeSidebar(editor)),
+              ),
               worldViewStack(editor),
             ),
           )
