@@ -4,15 +4,16 @@ import firesword.app.Camera.FreeCamera
 import firesword.app.CanvasView.canvasView
 import firesword.app.editor.EdObject.EdObject
 import firesword.app.editor.EdPlane.EdPlane
-import firesword.app.editor.Editor.Editor
+import firesword.app.editor.Editor.{Editor, ObjectMode, TileCoord, TileMode}
 import firesword.app.Geometry.Vec2d
-import firesword.app.editor.Editor.Mode.{ObjectMode, TileMode}
+import firesword.app.editor.Editor
 import firesword.app.utils.CanvasRenderingContext2DUtils.strokeRoundedRect
 import firesword.app.utils.IterableExt.implicitIterableExt
 import firesword.dom.Dom.Tag.div
-import firesword.dom.Dom.{MouseDragGesture, Widget}
+import firesword.dom.Dom.{MouseGesture, Widget}
 import firesword.frp.{Cell, MutCell, Till}
 import firesword.frp.Cell.Cell
+import firesword.frp.Frp.Const
 import firesword.frp.MutCell.MutCell
 import firesword.wwd.Wwd.DrawFlags
 import org.scalajs.dom._
@@ -208,21 +209,43 @@ object WorldView {
 
       }
 
-      val drawFn = Cell.map3(
+      val tileModeHoverCoord = editor.mode.switchMapC {
+        case ObjectMode => Const(None)
+        case tm: TileMode => tm._hoverCoord
+      }
+
+      val drawFn = Cell.map4(
         cameraTransform,
         objectsDrawFns.content,
-
         plane.tiles.marker,
+        tileModeHoverCoord,
         (
           cameraTransform: Transform,
           objectsDrawFns: List[(CanvasRenderingContext2D, Transform) => Unit],
           tileMarker: Unit,
+          tileModeHoverCoordOpt: Option[TileCoord],
         ) => (ctx: CanvasRenderingContext2D) => {
           val canvas = ctx.canvas
           canvasSize.set(Vec2d(canvas.width, canvas.height))
 
           drawTiles(ctx, cameraTransform)
           objectsDrawFns.foreach(drawFn => drawFn(ctx, cameraTransform))
+
+
+          tileModeHoverCoordOpt.foreach(tc => {
+            val transform = cameraTransform
+
+            ctx.setTransform(
+              transform.a,
+              transform.b,
+              transform.c,
+              transform.d,
+              transform.e,
+              transform.f,
+            )
+
+            ctx.strokeRect(tc.j * 64, tc.i * 64, 64, 64)
+          })
         }
       )
 
@@ -247,7 +270,7 @@ object WorldView {
         val isSelected = editor.selectedObject.sample().contains(obj)
 
         if (isSelected) {
-          val gesture = MouseDragGesture.start(
+          val gesture = MouseGesture.startDrag(
             element = theView,
             event = e,
             tillAbort = Till.end,
@@ -279,7 +302,7 @@ object WorldView {
 
     def handleMouseDownTileMode(e: MouseEvent): Unit = {
       if (e.button == 0) {
-        val gesture = MouseDragGesture.start(theView, e, tillAbort = Till.end)
+        val gesture = MouseGesture.startDrag(theView, e, tillAbort = Till.end)
 
         val targetWorldPoint = Cell.map2(
           inversedCameraTransform,
@@ -300,9 +323,22 @@ object WorldView {
       editor.mode.sample() match {
         case ObjectMode =>
           handleMouseDownObjectMode(e)
-        case TileMode =>
+        case _: TileMode =>
           handleMouseDownTileMode(e)
       }
+    })
+
+    theView.onMouseHover.listen(gesture => {
+      gesture.clientPos.listenTill(cp => {
+        val rp = theView.calculateRelativePosition(cp)
+        val wp = inversedCameraTransform.sample().transform(rp)
+        val tc = editor.getTileCoordAtPoint(wp)
+
+        editor.mode.sample() match {
+          case tileMode: TileMode => tileMode.hover(tc)
+          case _ =>
+        }
+      }, till = gesture.tillEnd)
     })
 
     theView

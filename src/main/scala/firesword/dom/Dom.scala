@@ -24,23 +24,44 @@ object Dom {
       () => element.removeEventListener(eventType, listener_)
     })
 
-  class MouseDragGesture(
-                          val clientPos: Cell[Vec2d],
-                          val tillEnd: Till,
-                        )
+  class MouseGesture(
+                      val clientPos: Cell[Vec2d],
+                      val tillEnd: Till,
+                    )
 
-  object MouseDragGesture {
-    def start(
-               element: Widget,
-               event: MouseEvent,
-               tillAbort: Till,
-             ): MouseDragGesture = {
-      val tillEnd = element.onPointerUp.tillNext(tillAbort)
+  object MouseGesture {
+    def startDrag(
+                   element: Widget,
+                   event: MouseEvent,
+                   tillAbort: Till,
+                 ): MouseGesture = start(
+      element = element,
+      onEnd = element.onMouseUp,
+      event = event, tillAbort = tillAbort,
+    )
+
+    def startHover(
+                    element: Widget,
+                    event: MouseEvent,
+                    tillAbort: Till,
+                  ): MouseGesture = start(
+      element = element,
+      onEnd = element.onMouseLeave,
+      event = event, tillAbort = tillAbort,
+    )
+
+    private def start(
+                       element: Widget,
+                       onEnd: EventStream[MouseEvent],
+                       event: MouseEvent,
+                       tillAbort: Till,
+                     ): MouseGesture = {
+      val tillEnd = onEnd.tillNext(tillAbort)
 
       val clientPos = element.onMouseMove.holdTill(event, tillEnd)
         .map(e => Vec2d(e.clientX, e.clientY))
 
-      new MouseDragGesture(
+      new MouseGesture(
         clientPos = clientPos,
         tillEnd = tillEnd,
       )
@@ -53,17 +74,29 @@ object Dom {
     lazy val onMouseDown: EventStream[MouseEvent] =
       elementEventStream[MouseEvent](node, "mousedown")
 
-
-    lazy val onMouseDrag: EventStream[MouseDragGesture] =
+    lazy val onMouseDrag: EventStream[MouseGesture] =
       ???
+
+    lazy val onMouseHover: EventStream[MouseGesture] =
+      elementEventStream[MouseEvent](node, "mouseenter").map(e =>
+        MouseGesture.startHover(
+          element = this,
+          event = e,
+          tillAbort = Till.end,
+        ),
+      )
+
+    lazy val onMouseUp: EventStream[MouseEvent] =
+      elementEventStream[MouseEvent](node, "mouseup")
+
+    lazy val onMouseLeave: EventStream[MouseEvent] =
+      elementEventStream[MouseEvent](node, "mouseleave")
 
     lazy val onPointerDown: EventStream[PointerEvent] =
       elementEventStream[PointerEvent](node, "pointerdown")
 
-
     lazy val onPointerUp: EventStream[PointerEvent] =
       elementEventStream[PointerEvent](node, "pointerup")
-
 
     lazy val onPointerMove: EventStream[PointerEvent] =
       elementEventStream[PointerEvent](node, "pointermove")

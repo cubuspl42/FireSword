@@ -7,8 +7,7 @@ import firesword.app.RezIndex.RezIndex
 import firesword.app.TileImageBank.TileImageBank
 import firesword.app.editor.EdObject.EdObject
 import firesword.app.editor.EdPlane.EdPlane
-import firesword.app.editor.Editor.Mode
-import firesword.app.editor.Editor.Mode.{Mode, ObjectMode, TileMode}
+
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicList
 import firesword.frp.DynamicList.DynamicList
@@ -24,9 +23,19 @@ import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 
 object Editor {
-  object Mode extends Enumeration {
-    type Mode = Value
-    val ObjectMode, TileMode = Value
+  sealed trait Mode
+
+  object ObjectMode extends Mode
+
+ case class TileMode() extends Mode {
+    val _hoverCoord = new MutCell[Option[TileCoord]](None)
+
+   val hoverCoord = new MutCell[Option[TileCoord]](None)
+
+
+   def hover(coord: TileCoord): Unit = {
+      _hoverCoord.set(Some(coord))
+    }
   }
 
   sealed trait EditContext
@@ -55,9 +64,9 @@ object Editor {
 
     val tileImageBank = new TileImageBank(rezIndex, levelIndex = levelIndex)
 
-    val _mode = new MutCell(ObjectMode)
+    val _mode = new MutCell[Mode](ObjectMode)
 
-    def mode: Cell[Mode.Value] = _mode
+    def mode: Cell[Mode] = _mode
 
     def enterMode(newMode: Mode): Unit = {
       _mode.set(newMode)

@@ -2,11 +2,10 @@ package firesword.app
 
 import firesword.app.Camera.FreeCamera
 import firesword.app.editor.EdPlane.EdPlane
-import firesword.app.editor.Editor.Editor
+import firesword.app.editor.Editor.{Editor, ObjectMode, TileMode}
 import firesword.app.Geometry.Vec2d
 import firesword.app.TileModeSidebar.tileModeSidebar
 import firesword.app.WorldViewStack.worldViewStack
-import firesword.app.editor.Editor.Mode.{ObjectMode, TileMode}
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.{Widget, widgetList}
 import firesword.frp.DynamicList
@@ -87,7 +86,7 @@ object EditorView {
     val tileModeButton = button("Tile mode")
 
     tileModeButton.onPressed.listen(_ => {
-      editor.enterMode(TileMode)
+      editor.enterMode(TileMode())
     })
 
     val insertObjectButton = button("Insert object")
@@ -147,7 +146,7 @@ object EditorView {
             styleClass = Styles.row,
             children = widgetList(
               editor.mode.map(m =>
-                Option.when(m == TileMode)(tileModeSidebar(editor)),
+                Option.when(m.isInstanceOf[TileMode])(tileModeSidebar(editor)),
               ),
               worldViewStack(editor),
             ),
