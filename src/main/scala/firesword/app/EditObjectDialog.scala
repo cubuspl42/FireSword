@@ -1,5 +1,6 @@
 package firesword.app
 
+import firesword.app.EditPlaneDialog.labeledCheckboxInput
 import firesword.app.editor.EdObject.EdObject
 import firesword.app.editor.Editor.Editor
 import firesword.dom.Dom.Tag._
@@ -98,7 +99,12 @@ object EditObjectDialog {
               labeledIntegerInput("i", edObject.i),
               labeledIntegerInput("addFlags", edObject.addFlags),
               labeledIntegerInput("dynamicFlags", edObject.dynamicFlags),
-              labeledIntegerInput("drawFlags", edObject.drawFlags),
+
+              labeledCheckboxInput("noDraw", edObject.noDraw),
+              labeledCheckboxInput("mirror", edObject.mirror),
+              labeledCheckboxInput("invert", edObject.invert),
+              labeledCheckboxInput("flash", edObject.flash),
+
               labeledIntegerInput("userFlags", edObject.userFlags),
               labeledIntegerInput("score", edObject.score),
               labeledIntegerInput("points", edObject.points),

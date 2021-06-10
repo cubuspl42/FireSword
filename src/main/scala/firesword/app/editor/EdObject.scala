@@ -8,7 +8,7 @@ import firesword.frp.EventStream.EventStream
 import firesword.frp.EventStreamSink.EventStreamSink
 import firesword.frp.MutCell.MutCell
 import firesword.wwd.DataStream.ByteString
-import firesword.wwd.Wwd.Object_
+import firesword.wwd.Wwd.{DrawFlags, Object_, WwdPlaneFlags}
 
 object EdObject {
 
@@ -69,7 +69,15 @@ object EdObject {
     val i = new MutCell(wwdObject.i)
     val addFlags = new MutCell(wwdObject.addFlags)
     val dynamicFlags = new MutCell(wwdObject.dynamicFlags)
-    val drawFlags = new MutCell(wwdObject.drawFlags)
+    
+    private def drawFlagMutCell(flag: Int) =
+      new MutCell((wwdObject.drawFlags & flag) != 0)
+
+    val noDraw: MutCell[Boolean] = drawFlagMutCell(DrawFlags.NoDraw)
+    val mirror: MutCell[Boolean] = drawFlagMutCell(DrawFlags.Mirror)
+    val invert: MutCell[Boolean] = drawFlagMutCell(DrawFlags.Invert)
+    val flash: MutCell[Boolean] = drawFlagMutCell(DrawFlags.Flash)
+
     val userFlags = new MutCell(wwdObject.userFlags)
     val score = new MutCell(wwdObject.score)
     val points = new MutCell(wwdObject.points)

@@ -89,6 +89,7 @@ object WorldView {
                     shortImageSetId: String,
                     isSelected: Boolean,
                     isEdited: Boolean,
+                    sv: Vec2d,
                   ): Unit = {
       //      val fqImageSetId = obj.imageSetId.replaceFirst("LEVEL_", "LEVEL1_IMAGES_")
 
@@ -115,9 +116,7 @@ object WorldView {
 
         val center = translate(halfSize * -1)
 
-        val sx: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Mirror) != 0) -1 else 1
-        val sy: Int = if ((obj.wwdObject.drawFlags & DrawFlags.Invert) != 0) -1 else 1
-        val mirror = scale(Vec2d(sx, sy))
+        val mirror = scale(sv)
 
         val positionTransform = translate(position + texture.offset)
 
@@ -153,16 +152,19 @@ object WorldView {
       val objectsDrawFns = objects
         .sortedBy(obj => obj.z.map(_.toDouble))
         .fuseMap(obj => {
-          Cell.map4(
+          Cell.map5(
             obj.position,
             obj.imageSet,
             editor.selectedObject.map(_.contains(obj)),
             editor.editedObject.map(_.contains(obj)),
+            Cell.map2(obj.mirror, obj.invert, (m: Boolean, i: Boolean) =>
+              Vec2d(if (m) -1 else 1, if (i) -1 else 1)),
             (
               position: Vec2d,
               imageSet: String,
               isSelected: Boolean,
               isEdited: Boolean,
+              scale: Vec2d,
             ) => (ctx: CanvasRenderingContext2D, cameraTransform: Transform) => {
               drawObject(
                 ctx = ctx,
@@ -173,6 +175,7 @@ object WorldView {
                 shortImageSetId = imageSet,
                 isSelected = isSelected,
                 isEdited = isEdited,
+                sv = scale,
               )
             },
           )

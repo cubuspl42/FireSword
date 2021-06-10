@@ -37,10 +37,10 @@ object EditPlaneDialog {
     _labeledInput(label, input)
   }
 
-  private def labeledCheckboxInput[A](
-                                       label: String,
-                                       cell: MutCell[Boolean],
-                                     ): List[Widget] = {
+  def labeledCheckboxInput[A](
+                               label: String,
+                               cell: MutCell[Boolean],
+                             ): List[Widget] = {
     val input = checkbox(cell.sample())
 
     input.isChecked.listen(cell.set)
