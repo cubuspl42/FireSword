@@ -160,6 +160,10 @@ object Editor {
       _editContext.set(Some(EditObject(edObject)))
     }
 
+    def editSelectedObject(): Unit = {
+      selectedObject.sample().foreach(editObject)
+    }
+
     def editWorld(): Unit = {
       _editContext.set(Some(EditWorld(worldProperties)))
     }

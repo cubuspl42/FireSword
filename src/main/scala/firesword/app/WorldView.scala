@@ -307,7 +307,7 @@ object WorldView {
       }
 
       if (e.button == 1) {
-        editor.selectedObject.sample().foreach(editor.editObject)
+        editor.editSelectedObject()
       }
     }
 

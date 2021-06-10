@@ -95,6 +95,12 @@ object EditorView {
       editor.insertObject()
     })
 
+    val editObjectButton = button("Edit object")
+
+    editObjectButton.onPressed.listen(_ => {
+      editor.editSelectedObject()
+    })
+
     val deleteObjectButton = button("Delete object")
 
     deleteObjectButton.onPressed.listen(_ => {
@@ -129,6 +135,7 @@ object EditorView {
         tileModeButton,
         objectModeButton,
         insertObjectButton,
+        editObjectButton,
         deleteObjectButton,
         worldPropertiesButton,
         planePropertiesButton,
