@@ -69,7 +69,7 @@ object EdObject {
     val i = new MutCell(wwdObject.i)
     val addFlags = new MutCell(wwdObject.addFlags)
     val dynamicFlags = new MutCell(wwdObject.dynamicFlags)
-    
+
     private def drawFlagMutCell(flag: Int) =
       new MutCell((wwdObject.drawFlags & flag) != 0)
 

@@ -1,14 +1,14 @@
 package firesword.app
 
-import firesword.app.EditObjectDialog.editObjectDialog
 import firesword.app.EditorView.editorView
-import firesword.app.editor.Editor
+import firesword.app.editor.Editor.Editor
 import firesword.dom.Dom
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.Widget
 import firesword.frp.Cell
 import org.scalajs.dom._
 
+import scala.concurrent.Future
 import scala.language.implicitConversions
 
 object FireSwordApp {
@@ -34,15 +34,26 @@ object FireSwordApp {
   def render(): Unit = {
     renderCss()
 
+    val app = new App()
     val root = document.getElementById("root")
-    Dom.render(root, rootView())
+
+    Dom.render(root, rootView(app))
   }
 
-  def rootView(): Widget = {
+  def rootView(app: App): Widget = {
+    import firesword.frp.DynamicList.Implicits.implicitSingleton
+
+    div(
+      children = app.editor.map(editorFutureView(app, _)),
+    )
+  }
+
+  def editorFutureView(
+                        app: App,
+                        editorFuture: Future[Editor],
+                      ): Widget = {
     import firesword.frp.DynamicList.Implicits.{implicitSingleton, implicitStaticSingleton}
     import firesword.frp.Frp.{implicitConst, implicitConstSome}
-
-    val editorFuture = Editor.load()
 
     val child = Cell.fromFuture(
       future = editorFuture,
@@ -50,7 +61,11 @@ object FireSwordApp {
         styleClass = MyStyles.center,
         children = span("Loading..."),
       ),
-      successfullyCompleted = editorView,
+      successfullyCompleted = (editor: Editor) =>
+        editorView(
+          app = app,
+          editor = editor,
+        ),
       failed = (throwable: Throwable) => {
         println("Error!")
         println(throwable)

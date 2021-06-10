@@ -10,12 +10,16 @@ import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.{Widget, widgetList}
 import firesword.frp.DynamicList
 import firesword.frp.Frp
+import firesword.wwd.Wwd.readWorld
 import org.scalajs.dom._
 import org.scalajs.dom.ext.KeyValue
 import scalacss.DevDefaults.StyleA
 import scalacss.DevDefaults._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
+import scala.scalajs.js.Promise
+import scala.scalajs.js.typedarray.ArrayBuffer
 
 object EditorView {
   object Styles extends StyleSheet.Inline {
@@ -38,7 +42,7 @@ object EditorView {
     )
   }
 
-  def editorView(editor: Editor): Widget = {
+  def editorView(app: App, editor: Editor): Widget = {
     import Frp.{implicitConst, implicitConstSome}
     import DynamicList.Implicits.implicitStatic
 

@@ -65,7 +65,7 @@ object Editor {
   class Editor(
                 private val world: World,
                 val rezIndex: RezIndex,
-                levelIndex: Int,
+                val levelIndex: Int,
               ) {
 
     val tileImageBank = new TileImageBank(rezIndex, levelIndex = levelIndex)
@@ -261,17 +261,19 @@ object Editor {
   def load(): Future[Editor] = {
     for (
       worldBuffer <- fetchWorldBuffer();
-      editor <- {
-        val world = readWorld(worldBuffer)
-        val levelIndex = findLevelIndex(world.name.decode())
-        for (
-          rezIndex <- RezIndex.load(levelIndex = levelIndex)
-        ) yield new Editor(
-          world = world,
-          rezIndex = rezIndex,
-          levelIndex = levelIndex,
-        )
-      }
+      editor <- loadBuffer(worldBuffer)
     ) yield editor
+  }
+
+  def loadBuffer(worldBuffer: ArrayBuffer): Future[Editor] = {
+    val world = readWorld(worldBuffer)
+    val levelIndex = findLevelIndex(world.name.decode())
+    for (
+      rezIndex <- RezIndex.load(levelIndex = levelIndex)
+    ) yield new Editor(
+      world = world,
+      rezIndex = rezIndex,
+      levelIndex = levelIndex,
+    )
   }
 }
