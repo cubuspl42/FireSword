@@ -384,6 +384,9 @@ object Wwd {
     val prefix3 = stream.readByteString(prefixLength)
     val prefix4 = stream.readByteString(prefixLength)
 
+
+    println(s"world name: ${levelName.decode()}")
+
     WwdHeader(
       size = size.toInt, // Sign?
       flags = flags.toInt, // Sign?

@@ -1,6 +1,7 @@
 package firesword.app
 
-import firesword.app.RezIndex.RezTexture
+import firesword.app.Json.ImageSet
+import firesword.app.RezIndex.{RezImageSet, RezTexture}
 import firesword.app.TileModeSidebar.Styles.selectionColor
 import firesword.app.editor.Editor.Editor
 import firesword.dom.Dom.Tag._
@@ -8,6 +9,7 @@ import firesword.dom.Dom.{Widget, widgetList}
 import firesword.frp.Cell.Cell
 import firesword.frp.Frp.implicitConstSome
 import firesword.frp.{DynamicList, Frp}
+import org.scalajs.dom.console
 import org.scalajs.dom.raw.HTMLElement
 import scalacss.DevDefaults.{StyleA, _}
 
@@ -106,12 +108,27 @@ object TileModeSidebar {
 
   def tileModeSidebar(editor: Editor): Widget = {
     import DynamicList.Implicits.implicitStatic
-    import Frp.{implicitConstSome, implicitConst}
+    import Frp.{implicitConstSome, implicitConst, implicitMapSome}
 
+    def buildWrap(imageSet: RezImageSet) = {
+      div(
+        styleClass = Styles.wrap,
+        children = imageSet.texturesByIndex.toSeq.sortBy(_._1)
+          .map(p => {
+            val (tileIndex, texture) = p
+            tileItem(
+              tileIndex,
+              texture,
+              isSelected = editor.selectedTile.map(_.contains(tileIndex)),
+              onPointerDown = () => {
+                editor.selectTile(tileIndex)
+              }
+            )
+          }).toList,
+      )
+    }
 
     val rezIndex = editor.rezIndex
-
-    val imageSet = rezIndex.getImageSet("LEVEL3_TILES_ACTION").get
 
     def eraserButtonElement() = {
       val eraserButton = button("Eraser")
@@ -129,22 +146,11 @@ object TileModeSidebar {
       )
     }
 
-
-    val wrap = div(
-      styleClass = Styles.wrap,
-      children = imageSet.texturesByIndex.toSeq.sortBy(_._1)
-        .map(p => {
-          val (tileIndex, texture) = p
-          tileItem(
-            tileIndex,
-            texture,
-            isSelected = editor.selectedTile.map(_.contains(tileIndex)),
-            onPointerDown = () => {
-              editor.selectTile(tileIndex)
-            }
-          )
-        }).toList,
-    )
+    val wrap = editor.activePlane.map(plane => {
+      val primaryImageSet = plane.primaryImageSet
+      val imageSetOpt = rezIndex.getImageSet(s"LEVEL${editor.levelIndex}_TILES_${primaryImageSet}")
+      imageSetOpt.fold(span("Error"))(buildWrap)
+    })
 
     div(
       styleClass = Styles.root,
