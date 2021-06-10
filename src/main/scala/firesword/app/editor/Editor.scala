@@ -27,16 +27,22 @@ object Editor {
 
   object ObjectMode extends Mode
 
- case class TileMode() extends Mode {
+  case class TileMode() extends Mode {
     val _hoverCoord = new MutCell[Option[TileCoord]](None)
 
-   val hoverCoord = new MutCell[Option[TileCoord]](None)
+    val hoverCoord = new MutCell[Option[TileCoord]](None)
 
 
-   def hover(coord: TileCoord): Unit = {
+    def hover(coord: TileCoord): Unit = {
       _hoverCoord.set(Some(coord))
     }
   }
+
+  sealed trait Brush
+
+  case class TileBrush(tile: Tile) extends Brush
+
+  case object Eraser extends Brush
 
   sealed trait EditContext
 
@@ -167,18 +173,37 @@ object Editor {
       _editContext.set(None)
     }
 
-    private val _selectedTile = new MutCell[Tile](1)
+    private val _selectedBrush = new MutCell[Brush](Eraser)
 
-    def selectedTile: Cell[Tile] = _selectedTile
+    def selectedBrush: Cell[Brush] = _selectedBrush
 
-    def selectTile(tile: Tile): Unit = {
-      _selectedTile.set(tile)
+    def selectedTile: Cell[Option[Tile]] = selectedBrush.map {
+      case TileBrush(tile) => Some(tile)
+      case _ => None
     }
 
-    def drawTileAt(twp: Vec2d): Unit = {
+    def isEraserSelected: Cell[Boolean] = selectedBrush.map {
+      case Eraser => true
+      case _ => false
+    }
+
+    def selectTile(tile: Tile): Unit = {
+      _selectedBrush.set(TileBrush(tile))
+    }
+
+    def selectEraser(): Unit = {
+      _selectedBrush.set(Eraser)
+    }
+
+    def drawAt(twp: Vec2d): Unit = {
       val currentActivePlane = activePlane.sample()
       val tileCoord = getTileCoordAtPoint(twp)
-      currentActivePlane.setTile(tileCoord, selectedTile.sample())
+      val brush = selectedBrush.sample()
+
+      brush match {
+        case TileBrush(tile) => currentActivePlane.setTile(tileCoord, tile)
+        case Eraser => currentActivePlane.setTile(tileCoord, -1)
+      }
     }
 
     val _zoom = new MutCell(1.0)

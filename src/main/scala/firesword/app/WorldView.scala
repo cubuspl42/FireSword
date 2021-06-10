@@ -317,7 +317,7 @@ object WorldView {
         val targetWorldPoint = buildGestureTargetWorldPoint(gesture)
 
         targetWorldPoint.listenTill(twp => {
-          editor.drawTileAt(twp)
+          editor.drawAt(twp)
         }, till = gesture.tillEnd)
       }
     }

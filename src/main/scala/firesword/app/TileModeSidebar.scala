@@ -1,9 +1,10 @@
 package firesword.app
 
 import firesword.app.RezIndex.RezTexture
+import firesword.app.TileModeSidebar.Styles.selectionColor
 import firesword.app.editor.Editor.Editor
 import firesword.dom.Dom.Tag._
-import firesword.dom.Dom.Widget
+import firesword.dom.Dom.{Widget, widgetList}
 import firesword.frp.Cell.Cell
 import firesword.frp.Frp.implicitConstSome
 import firesword.frp.{DynamicList, Frp}
@@ -20,10 +21,22 @@ object TileModeSidebar {
 
     import dsl._
 
+    val selectionColor = c"#adadad99"
+
     val root: StyleA = style(
+      paddingTop(4 px),
       width(200 px),
       backgroundColor lightgrey,
 
+      display flex,
+      flexDirection column,
+      alignItems center,
+
+      gap(8 px),
+      resize horizontal,
+    )
+
+    val wrap: StyleA = style(
       display flex,
       flexDirection row,
       flexWrap wrap,
@@ -31,7 +44,12 @@ object TileModeSidebar {
       alignItems center,
 
       overflowY scroll,
-      resize horizontal,
+    )
+
+    val eraserBorder: StyleA = style(
+      borderColor transparent,
+      borderWidth(4 px),
+      borderStyle solid,
     )
 
     val tileItem: StyleA = style(
@@ -45,8 +63,7 @@ object TileModeSidebar {
 
     val tileItemLayerBorder: StyleA = style(
       tileItemLayer,
-//      borderColor(c"#00000030"),
-      borderColor(c"#adadad99"),
+      borderColor(selectionColor),
       borderWidth(8 px),
       borderStyle solid,
     )
@@ -89,26 +106,52 @@ object TileModeSidebar {
 
   def tileModeSidebar(editor: Editor): Widget = {
     import DynamicList.Implicits.implicitStatic
-    import Frp.implicitConstSome
+    import Frp.{implicitConstSome, implicitConst}
+
 
     val rezIndex = editor.rezIndex
 
     val imageSet = rezIndex.getImageSet("LEVEL3_TILES_ACTION").get
 
-    div(
-      styleClass = Styles.root,
+    def eraserButtonElement() = {
+      val eraserButton = button("Eraser")
+
+      eraserButton.onPressed.listen(_ => editor.selectEraser())
+
+      div(
+        styleClass = Styles.eraserBorder,
+        inlineStyle = editor.isEraserSelected.map(
+          if (_) "border-color: grey;" else ""
+        ),
+        children = widgetList(
+          eraserButton,
+        )
+      )
+    }
+
+
+    val wrap = div(
+      styleClass = Styles.wrap,
       children = imageSet.texturesByIndex.toSeq.sortBy(_._1)
         .map(p => {
           val (tileIndex, texture) = p
           tileItem(
             tileIndex,
             texture,
-            isSelected = editor.selectedTile.map(_ == tileIndex),
+            isSelected = editor.selectedTile.map(_.contains(tileIndex)),
             onPointerDown = () => {
               editor.selectTile(tileIndex)
             }
           )
         }).toList,
+    )
+
+    div(
+      styleClass = Styles.root,
+      children = widgetList(
+        eraserButtonElement(),
+        wrap,
+      )
     )
   }
 }
