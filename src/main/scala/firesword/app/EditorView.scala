@@ -81,6 +81,14 @@ object EditorView {
       }
     })
 
+    val theFileInput = fileInput()
+
+    theFileInput.file.listen(fileOpt =>
+      fileOpt.foreach(file => {
+        app.openFile(file)
+      }),
+    )
+
     val objectModeButton = button("Object mode")
 
     objectModeButton.onPressed.listen(_ => {
@@ -135,7 +143,8 @@ object EditorView {
 
     val toolBar = div(
       styleClass = MyStyles.toolBar,
-      children = List(
+      children = widgetList(
+        theFileInput,
         tileModeButton,
         objectModeButton,
         insertObjectButton,

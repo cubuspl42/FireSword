@@ -136,6 +136,14 @@ object Dom {
     override protected def parseString(s: String): String = s
   }
 
+  class FileInput(element: HTMLInputElement) extends Widget(element) {
+    lazy val file: Cell[Option[File]] =
+      elementEventStream[Event](element, "change").map(_ => {
+        val files = element.files
+        Option.when(files.length > 0)(files.item(0))
+      }).hold(None)
+  }
+
   class Checkbox(element: HTMLInputElement) extends Widget(element) {
     lazy val isChecked: Cell[Boolean] = {
       val onChange = elementEventStream[Event](element, "change")
@@ -268,6 +276,13 @@ object Dom {
       element.setAttribute("value", initialValue)
 
       new TextInput(element)
+    }
+
+    def fileInput(): FileInput = {
+      val element = document.createElement("input").asInstanceOf[HTMLInputElement]
+      element.setAttribute("type", "file");
+
+      new FileInput(element)
     }
 
     def checkbox(initialChecked: Boolean): Checkbox = {
