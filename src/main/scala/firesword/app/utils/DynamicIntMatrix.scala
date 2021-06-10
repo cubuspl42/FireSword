@@ -6,7 +6,7 @@ import firesword.frp.MutCell.MutCell
 import scala.scalajs.js.typedarray.Int32Array
 
 trait DynamicIntMatrix {
-  def get(i: Int, j: Int): Int
+  def get(i: Int, j: Int): Option[Int]
 
   def forEach(h: (Int, Int, Int) => Unit): Unit
 
@@ -23,17 +23,22 @@ class MutDynamicIntMatrix(
 
   override def marker: Cell[Unit] = _marker
 
-  def get(i: Int, j: Int): Int = {
+  def get(i: Int, j: Int): Option[Int] = {
     val k = i * width + j
-    array.get(k)
+    _get(k)
   }
+
+  private def _get(k: Int): Option[Int] =
+    Option.when((0 until array.length).contains(k))(array.get(k))
 
   def set(i: Int, j: Int, value: Int): Unit = {
     val k = i * width + j
-    if (array.get(k) != value) {
-      array.set(k, value)
-      _marker.set(())
-    }
+    _get(k).foreach(ak => {
+      if (ak != value) {
+        array.set(k, value)
+        _marker.set(())
+      }
+    })
   }
 
   def forEach(h: (Int, Int, Int) => Unit): Unit = {
@@ -41,7 +46,7 @@ class MutDynamicIntMatrix(
       i <- 0 until height;
       j <- 0 until width
     ) {
-      h(i, j, get(i, j))
+      h(i, j, get(i, j).get)
     }
   }
 }

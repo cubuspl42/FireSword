@@ -4,11 +4,16 @@ import firesword.dom.Dom.Widget
 import firesword.frp.Cell.Cell
 import org.scalajs.dom._
 import org.scalajs.dom.html.Canvas
+import org.scalajs.dom.raw.HTMLCanvasElement
 
 import scala.language.implicitConversions
 
+class CanvasWidget(
+                    override val node: HTMLCanvasElement,
+                  ) extends Widget(node)
+
 object CanvasView {
-  def canvasView(drawFn: Cell[CanvasRenderingContext2D => Unit]): Widget = {
+  def canvasView(drawFn: Cell[CanvasRenderingContext2D => Unit]): CanvasWidget = {
     val canvas = document.createElement("canvas").asInstanceOf[Canvas]
 
     canvas.addEventListener("contextmenu", (e: Event) => e.preventDefault())
@@ -38,10 +43,12 @@ object CanvasView {
         if (canvas.width != w || canvas.height != h) {
           canvas.width = w
           canvas.height = h
+
+          isDirty = true
         }
 
         // Force redrawing
-//        isDirty = true
+        //        isDirty = true
 
         if (isDirty) {
 
@@ -62,6 +69,6 @@ object CanvasView {
 
     requestDraw()
 
-    new Widget(canvas)
+    new CanvasWidget(canvas)
   }
 }

@@ -17,6 +17,8 @@ import firesword.frp.Frp.Const
 import firesword.frp.MutCell.MutCell
 import firesword.wwd.Wwd.DrawFlags
 import org.scalajs.dom._
+import org.scalajs.dom.html.Canvas
+import org.scalajs.dom.raw.HTMLCanvasElement
 
 import scala.language.implicitConversions
 
@@ -56,16 +58,14 @@ object WorldView {
 
     val canvasSize = new MutCell(Vec2d.zero)
 
-    val cameraTransform = Cell.map3(
+    val buildCameraTransform = Cell.map2(
       editor.cameraFocusPoint,
       editor.cameraZoom,
-      canvasSize,
-      (fp: Vec2d, z: Double, canvasSize: Vec2d) => {
+      (fp: Vec2d, z: Double) => (canvas: HTMLCanvasElement) => {
+        val canvasSize = Vec2d(canvas.width, canvas.height)
         translate(canvasSize / 2) * scale(z) * translate(fp * -1)
       },
     )
-
-    val inversedCameraTransform = cameraTransform.map(_.inversed())
 
     def expandShortImageSetId(shortImageSetId: String): Option[String] = {
       def expandPrefix(prefix: String, expansion: String) = {
@@ -215,12 +215,12 @@ object WorldView {
       }
 
       val drawFn = Cell.map4(
-        cameraTransform,
+        buildCameraTransform,
         objectsDrawFns.content,
         plane.tiles.marker,
         tileModeHoverCoord,
         (
-          cameraTransform: Transform,
+          buildCameraTransform: Canvas => Transform,
           objectsDrawFns: List[(CanvasRenderingContext2D, Transform) => Unit],
           tileMarker: Unit,
           tileModeHoverCoordOpt: Option[TileCoord],
@@ -228,6 +228,7 @@ object WorldView {
           val canvas = ctx.canvas
           canvasSize.set(Vec2d(canvas.width, canvas.height))
 
+          val cameraTransform = buildCameraTransform(ctx.canvas)
           drawTiles(ctx, cameraTransform)
           objectsDrawFns.foreach(drawFn => drawFn(ctx, cameraTransform))
 
@@ -258,11 +259,28 @@ object WorldView {
 
     val theView = canvasView(drawFn)
 
+    def buildGestureTargetWorldPoint(gesture: MouseGesture) =
+      buildTargetWorldPoint(gesture.clientPos)
+
+    def buildTargetWorldPoint(clientPos: Cell[Vec2d]) =
+      Cell.map2(
+        buildCameraTransform,
+        clientPos.map(theView.calculateRelativePosition),
+        (
+          buildTransform: HTMLCanvasElement => Transform,
+          clientPos: Vec2d,
+        ) => {
+          val transform = buildTransform(theView.node).inversed()
+          transform.transform(clientPos)
+        }
+      )
+
+    def sampleTargetWorldPoint(cp: Vec2d) =
+      buildTargetWorldPoint(Const(cp)).sample()
+
     def handleMouseDownObjectMode(e: MouseEvent): Unit = {
       if (e.button == 0) {
-        val viewPoint = theView.calculateRelativePosition(e)
-        val invertedTransform = inversedCameraTransform.sample()
-        val initialWorldPoint = invertedTransform.transform(viewPoint)
+        val initialWorldPoint = sampleTargetWorldPoint(Vec2d(e.clientX, e.clientY))
 
         val activePlane = editor.activePlane.sample()
         val obj = activePlane.findClosestObject(initialWorldPoint)
@@ -276,14 +294,7 @@ object WorldView {
             tillAbort = Till.end,
           )
 
-          val targetWorldPoint = Cell.map2(
-            inversedCameraTransform,
-            gesture.clientPos.map(theView.calculateRelativePosition),
-            (
-              transform: Transform,
-              clientPos: Vec2d,
-            ) => transform.transform(clientPos)
-          )
+          val targetWorldPoint = buildGestureTargetWorldPoint(gesture)
 
           val delta = targetWorldPoint.map(twp => {
             twp - initialWorldPoint
@@ -303,15 +314,7 @@ object WorldView {
     def handleMouseDownTileMode(e: MouseEvent): Unit = {
       if (e.button == 0) {
         val gesture = MouseGesture.startDrag(theView, e, tillAbort = Till.end)
-
-        val targetWorldPoint = Cell.map2(
-          inversedCameraTransform,
-          gesture.clientPos.map(theView.calculateRelativePosition),
-          (
-            transform: Transform,
-            clientPos: Vec2d,
-          ) => transform.transform(clientPos)
-        )
+        val targetWorldPoint = buildGestureTargetWorldPoint(gesture)
 
         targetWorldPoint.listenTill(twp => {
           editor.drawTileAt(twp)
@@ -330,8 +333,8 @@ object WorldView {
 
     theView.onMouseHover.listen(gesture => {
       gesture.clientPos.listenTill(cp => {
-        val rp = theView.calculateRelativePosition(cp)
-        val wp = inversedCameraTransform.sample().transform(rp)
+        val wp = sampleTargetWorldPoint(cp)
+
         val tc = editor.getTileCoordAtPoint(wp)
 
         editor.mode.sample() match {
