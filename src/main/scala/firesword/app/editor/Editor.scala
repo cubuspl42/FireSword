@@ -7,6 +7,8 @@ import firesword.app.RezIndex.RezIndex
 import firesword.app.TileImageBank.TileImageBank
 import firesword.app.editor.EdObject.EdObject
 import firesword.app.editor.EdPlane.EdPlane
+import firesword.base.{File, FileOptions}
+import firesword.dom.Dom.Tag.anchor
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicList
 import firesword.frp.DynamicList.DynamicList
@@ -15,7 +17,7 @@ import firesword.scalajsdomext.Fetch.fetchArrayBuffer
 import firesword.wwd.DumpWwd.dumpWwd
 import firesword.wwd.OutputDataStream.OutputStream
 import firesword.wwd.Wwd.{Object_, World, WwdPlaneFlags, readWorld}
-import org.scalajs.dom.{console, window}
+import org.scalajs.dom.{URL, console, window}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -237,6 +239,30 @@ object Editor {
 
     def getTileCoordAtPoint(x: Double, y: Double): TileCoord =
       getTileCoordAtPoint(Vec2d(x, y))
+
+    def save(): Unit = {
+      val fileName = "test.wwd"
+
+      val outputStream = new OutputStream()
+      dumpWwd(outputStream, world)
+      val worldBuffer = outputStream.toArrayBuffer()
+
+      val file = new File(
+        bits = js.Array(worldBuffer),
+        name = fileName,
+        options = FileOptions(
+          mimeType = "application/x-wwd",
+        ),
+      )
+
+      val saveAnchor = anchor(
+        href = URL.createObjectURL(file),
+        download = fileName,
+        text = "",
+      )
+
+      saveAnchor.node.click()
+    }
   }
 
   def delay(milliseconds: Int): Future[Unit] = {

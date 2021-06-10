@@ -7,10 +7,11 @@ import firesword.frp.DynamicList.DynamicList
 import firesword.frp.EventStream.EventStream
 import firesword.frp.Frp.Const
 import firesword.frp.SourceEventStream.SourceEventStream
+import firesword.scalajsdomext.HTMLAnchorElementExt.implicitHTMLAnchorElementExt
 import org.scalajs.dom
 import org.scalajs.dom._
 import org.scalajs.dom.html.Element
-import org.scalajs.dom.raw.{HTMLButtonElement, HTMLElement, HTMLInputElement, HTMLOptionElement, HTMLSelectElement}
+import org.scalajs.dom.raw.{HTMLAnchorElement, HTMLButtonElement, HTMLElement, HTMLInputElement, HTMLOptionElement, HTMLSelectElement}
 import scalacss.StyleA
 
 object Dom {
@@ -298,6 +299,14 @@ object Dom {
       val element = document.createElement("button").asInstanceOf[HTMLButtonElement]
       element.innerText = text
       new Button(element)
+    }
+
+    def anchor(href: String, download: String, text: String): Widget = {
+      val element = document.createElement("a").asInstanceOf[HTMLAnchorElement]
+      element.href = href
+      element.download = download
+      element.text = text
+      new Widget(element)
     }
 
     def singletonDiv(

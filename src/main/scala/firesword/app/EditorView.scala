@@ -1,24 +1,21 @@
 package firesword.app
 
 import firesword.app.Camera.FreeCamera
-import firesword.app.editor.EdPlane.EdPlane
-import firesword.app.editor.Editor.{Editor, ObjectMode, TileMode}
 import firesword.app.Geometry.Vec2d
 import firesword.app.TileModeSidebar.tileModeSidebar
 import firesword.app.WorldViewStack.worldViewStack
+import firesword.app.editor.EdPlane.EdPlane
+import firesword.app.editor.Editor.{Editor, ObjectMode, TileMode}
+import firesword.base.{File, FileOptions}
 import firesword.dom.Dom.Tag._
 import firesword.dom.Dom.{Widget, widgetList}
-import firesword.frp.DynamicList
 import firesword.frp.Frp
-import firesword.wwd.Wwd.readWorld
 import org.scalajs.dom._
 import org.scalajs.dom.ext.KeyValue
-import scalacss.DevDefaults.StyleA
-import scalacss.DevDefaults._
+import scalacss.DevDefaults.{StyleA, _}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.language.postfixOps
-import scala.scalajs.js.Promise
+import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 
 object EditorView {
@@ -43,8 +40,7 @@ object EditorView {
   }
 
   def editorView(app: App, editor: Editor): Widget = {
-    import Frp.{implicitConst, implicitConstSome}
-    import DynamicList.Implicits.implicitStatic
+    import Frp.implicitConstSome
 
     document.body.addEventListener("keydown", (e: KeyboardEvent) => {
       import firesword.frp.Frp.implicitSome
@@ -80,6 +76,30 @@ object EditorView {
         deltaZ.foreach(editor.zoomCamera)
       }
     })
+
+    // var file;
+    //var data = [];
+    //data.push("This is a test\n");
+    //data.push("Of creating a file\n");
+    //data.push("In a browser\n");
+    //var properties = {type: 'text/plain'}; // Specify the file's mime-type.
+    //try {
+    //  // Specify the filename using the File constructor, but ...
+    //  file = new File(data, "file.txt", properties);
+    //} catch (e) {
+    //  // ... fall back to the Blob constructor if that isn't supported.
+    //  file = new Blob(data, properties);
+    //}
+    //var url = URL.createObjectURL(file);
+    //document.getElementById('link').href = url;
+
+    val saveButton = button("Save")
+
+    saveButton.onPressed.listen(_ => {
+      editor.save()
+    })
+
+    //    val saveAnchor = anchor("https://example.com", "Save")
 
     val theFileInput = fileInput()
 
@@ -144,6 +164,7 @@ object EditorView {
     val toolBar = div(
       styleClass = MyStyles.toolBar,
       children = widgetList(
+        saveButton,
         theFileInput,
         tileModeButton,
         objectModeButton,
