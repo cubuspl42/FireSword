@@ -21,14 +21,14 @@ object Map {
     }
 
     override protected def onStart(): Unit = {
-      cachedValue = Some(f(source.sample()))
       unsubscribe = source.addListener(handle)
+      cachedValue = Some(f(source.sample()))
     }
 
     override protected def onStop(): Unit = {
+      cachedValue = None
       unsubscribe()
       unsubscribe = null
-      cachedValue = None
     }
   }
 }

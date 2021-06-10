@@ -24,14 +24,14 @@ object CellCached {
     }
 
     override protected def onStart(): Unit = {
-      cachedValue = Some(source.sample())
       unsubscribe = source.addListener(handle)
+      cachedValue = Some(source.sample())
     }
 
     override protected def onStop(): Unit = {
+      cachedValue = None
       unsubscribe()
       unsubscribe = null
-      cachedValue = None
     }
   }
 }
