@@ -7,14 +7,15 @@ import firesword.app.RezIndex.RezIndex
 import firesword.app.TileImageBank.TileImageBank
 import firesword.app.editor.EdObject.EdObject
 import firesword.app.editor.EdPlane.EdPlane
-
 import firesword.frp.Cell.Cell
 import firesword.frp.DynamicList
 import firesword.frp.DynamicList.DynamicList
 import firesword.frp.MutCell.MutCell
 import firesword.scalajsdomext.Fetch.fetchArrayBuffer
+import firesword.wwd.DumpWwd.dumpWwd
+import firesword.wwd.OutputDataStream.OutputStream
 import firesword.wwd.Wwd.{Object_, World, WwdPlaneFlags, readWorld}
-import org.scalajs.dom.window
+import org.scalajs.dom.{console, window}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
@@ -265,8 +266,20 @@ object Editor {
     ) yield editor
   }
 
+  def printBufferStats(buffer: ArrayBuffer): Unit = {
+    console.log(s"Length: ${buffer.byteLength}")
+  }
+
   def loadBuffer(worldBuffer: ArrayBuffer): Future[Editor] = {
+    printBufferStats(worldBuffer)
+
     val world = readWorld(worldBuffer)
+
+    val outputStream = new OutputStream()
+    dumpWwd(outputStream, world)
+
+    printBufferStats(outputStream.toArrayBuffer())
+
     val levelIndex = findLevelIndex(world.name.decode())
     for (
       rezIndex <- RezIndex.load(levelIndex = levelIndex)

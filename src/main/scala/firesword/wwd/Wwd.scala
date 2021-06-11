@@ -1,7 +1,9 @@
 package firesword.wwd
 
 import firesword.wwd.DataStream.{ByteString, DataStream}
+import firesword.wwd.DumpWwd.WAP_TILE_TYPE_SINGLE
 import firesword.wwd.Geometry.Rectangle
+import firesword.wwd.Wwd.readTileDescriptions
 import pako.Pako
 
 import scala.scalajs.js.typedarray.{ArrayBuffer, Int32Array, Uint8Array}
@@ -27,6 +29,7 @@ object Wwd {
                     prefix3: ByteString,
                     prefix4: ByteString,
                     planes: List[Plane],
+                    tileDescriptions: List[TileDescription],
                   )
 
   case class Plane(
@@ -295,6 +298,17 @@ object Wwd {
   val imageSetLength = 128
   val prefixLength = 32
 
+
+  case class TileDescription(
+                              _type: Int = 0, /* WAP_TILE_TYPE_ single value */
+                              width: Int = 0, /* in pixels */
+                              height: Int = 0, /* in pixels */
+                              insideAttrib: Int = 0, /* WAP_TILE_ATTRIBUTE_ */
+                              /* outside_attrib and rect only if type == WAP_TILE_TYPE_DOUBLE */
+                              outsideAttr: Int = 0, /* WAP_TILE_ATTRIBUTE_ */
+                              rect: Rectangle = Rectangle.zero,
+                            )
+
   def range(end: Int): List[Int] =
     (0 until end).toList
 
@@ -317,7 +331,6 @@ object Wwd {
     val header = readWwdHeader(wwdBuffer)
     val mainBlock = wwdBuffer.slice(header.mainBlockOffset)
 
-
     def decompressWwdBuffer(): ArrayBuffer = {
       val headerBuffer = wwdBuffer.slice(0, header.size)
       val decompressedMainBlock = decompressBuffer(mainBlock)
@@ -327,28 +340,31 @@ object Wwd {
     val decompressedWwdBuffer = if ((header.flags & WwdHeaderFlags.COMPRESS) != 0)
       decompressWwdBuffer() else wwdBuffer
 
-    val planes = readMainBlock(header, decompressedWwdBuffer)
+    val planes = readPlanes(header, decompressedWwdBuffer)
+
+    val tileDescriptions = readTileDescriptions(header, decompressedWwdBuffer)
 
     World(
-      header.flags,
-      header.levelName,
-      header.author,
-      header.birth,
-      header.rezFile,
-      header.imageDir,
-      header.palRez,
-      header.startX,
-      header.startY,
-      header.launchApp,
-      header.imageSet1,
-      header.imageSet2,
-      header.imageSet3,
-      header.imageSet4,
-      header.prefix1,
-      header.prefix2,
-      header.prefix3,
-      header.prefix4,
-      planes
+      flags = header.flags,
+      name = header.levelName,
+      author = header.author,
+      dateCreatedString = header.birth,
+      rezFilePath = header.rezFile,
+      imageDir = header.imageDir,
+      palRez = header.palRez,
+      startX = header.startX,
+      startY = header.startY,
+      launchApp = header.launchApp,
+      imageSet1 = header.imageSet1,
+      imageSet2 = header.imageSet2,
+      imageSet3 = header.imageSet3,
+      imageSet4 = header.imageSet4,
+      prefix1 = header.prefix1,
+      prefix2 = header.prefix2,
+      prefix3 = header.prefix3,
+      prefix4 = header.prefix4,
+      planes = planes,
+      tileDescriptions = tileDescriptions,
     )
   }
 
@@ -415,14 +431,8 @@ object Wwd {
     )
   }
 
-  def readMainBlock(header: WwdHeader, wwdBuffer: ArrayBuffer): List[Plane] = {
-    readPlanes(header, wwdBuffer)
-  }
-
   def readPlanes(wwdHeader: WwdHeader, wwdBuffer: ArrayBuffer): List[Plane] = {
     val headers = readPlaneHeaders(wwdHeader, wwdBuffer)
-
-
     headers.map(header => readPlane(header, wwdBuffer))
   }
 
@@ -647,5 +657,51 @@ object Wwd {
       xMoveRes = xMoveRes,
       yMoveRes = yMoveRes,
     )
+  }
+
+  def readTileDescriptions(wwdHeader: WwdHeader, wwdBuffer: ArrayBuffer): List[TileDescription] = {
+    val stream = new DataStream(wwdBuffer, wwdHeader.tileDescriptionsOffset)
+
+    stream.expectInt32(32)
+    stream.expectInt32(0)
+    val numTileDescriptions = stream.readInt32()
+    stream.expectInt32(0)
+    stream.expectInt32(0)
+    stream.expectInt32(0)
+    stream.expectInt32(0)
+    stream.expectInt32(0)
+
+    range(numTileDescriptions).map(_ => loadTileDescription(stream))
+  }
+
+  def loadTileDescription(stream: DataStream): TileDescription = {
+    val _type = stream.readInt32()
+    val unknown = stream.readInt32()
+    val width = stream.readInt32()
+    val height = stream.readInt32()
+
+    if (_type == WAP_TILE_TYPE_SINGLE) {
+      val insideAttrib = stream.readInt32()
+
+      TileDescription(
+        _type = _type,
+        width = width,
+        height = height,
+        insideAttrib = insideAttrib,
+      )
+    } else {
+      val outsideAttr = stream.readInt32()
+      val insideAttrib = stream.readInt32()
+      val rect = stream.readRectangle()
+
+      TileDescription(
+        _type = _type,
+        width = width,
+        height = height,
+        insideAttrib = insideAttrib,
+        outsideAttr = outsideAttr,
+        rect = rect,
+      )
+    }
   }
 }

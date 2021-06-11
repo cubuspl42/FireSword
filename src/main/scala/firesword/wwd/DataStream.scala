@@ -20,6 +20,8 @@ object DataStream {
 
 
   class ByteString(val byteArray: Uint8Array) {
+    def length = byteArray.length
+
     override def toString: String = decoder.decode(byteArray)
 
     def decode(): String =
@@ -35,6 +37,7 @@ object DataStream {
   }
 
   class DataStream(_arrayBuffer: ArrayBuffer, initialOffset: Int = 0) {
+
     private val _dataView = new DataView(_arrayBuffer);
 
     private var _offset = initialOffset
@@ -46,6 +49,10 @@ object DataStream {
       val value = this._dataView.getInt32(this._offset, this._littleEndian);
       this._offset += 4;
       return value;
+    }
+
+    def expectInt32(i: Int) = {
+      readInt32()
     }
 
     def readUint32(): Long = {
