@@ -69,9 +69,11 @@ object OutputDataStream {
 
       byteArray.toSeq.foreach(byte => {
         _dataView.setUint8(_offset, byte)
+        _offset += 1
       })
 
-      _offset += byteString.length
+      _dataView.setUint8(_offset, 0)
+      _offset += 1
     }
 
     //
